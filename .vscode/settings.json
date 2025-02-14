@@ -1,0 +1,8 @@
+{
+    "css.validate": false,
+    "stylelint.validate": ["css", "postcss"],
+    "stylelint.enable": true,
+    "tailwindCSS.experimental.classRegex": [
+        ["@apply\\s+([^;]*);", "(?:'|\")([^'\"]*)(?:'|\")"]
+    ]
+}

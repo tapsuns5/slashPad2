@@ -1,3 +1,5 @@
+/* stylelint-disable at-rule-no-unknown */
+/* tailwind-ignore */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -744,3 +746,4 @@ table {
 .hljs-strong {
     font-weight: 700;
 }
+
