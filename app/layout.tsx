@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "./Styles/globals.css";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { FlyoutMenu } from "./Components/FlyoutMenu/FlyoutMenu";
+import { GrammarlyCleanup } from './utils/grammarlyCleaner'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,8 +30,22 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <GrammarlyCleanup>
+          {children}
+        </GrammarlyCleanup>
       </body>
     </html>
   );
+}
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <FlyoutMenu onClose={() => { }} />
+      <main>
+        <SidebarTrigger />
+        {children}
+      </main>
+    </SidebarProvider>
+  )
 }
