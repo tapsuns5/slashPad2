@@ -1,26 +1,48 @@
 "use client"
 
 import * as React from "react"
+import * as TiptapReact from "@tiptap/react";
+import dynamic from "next/dynamic";
+import { useEditor } from "@tiptap/react";
+import editorExtensions from "../Components/Editor/EditorExtensions";
 import { PanelRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../Components/Sidebar/SidebarMenu"
 import { SidebarProvider, useSidebar } from "../Components/Sidebar/SidebarContext"
 
+// Dynamically import EditorComponent with SSR disabled
+const EditorComponent = dynamic(() => import("../Components/Editor/Editor"), { 
+  ssr: false,
+  loading: () => <div>Loading editor...</div>
+});
 
 const PageContent = () => {
-    // Initialize date as null
     const { isOpen, toggleSidebar } = useSidebar()
-    const editorRef = React.useRef<HTMLDivElement | null>(null)
+    const [isClient, setIsClient] = React.useState(false);
+    const editorRef = React.useRef<TiptapReact.Editor | null>(null);
+
+    React.useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    const editor = useEditor({
+        extensions: editorExtensions,
+        content: '', // Optional: provide initial content
+    })
+
     const [isSearchOpen, setIsSearchOpen] = React.useState(false)
 
     React.useEffect(() => {
-        if (editorRef.current) {
+        if (isClient && editor) {
             // Initialize editor
-            editorRef.current.focus()
+            editor.chain().focus()
         }
-    }, [])
+    }, [isClient, editor])
 
+    if (!isClient) {
+        return null;
+    }
 
     return (
       <div className="min-h-screen bg-background text-foreground">
@@ -56,7 +78,10 @@ const PageContent = () => {
               >
                 <ScrollArea className="flex-1 h-full mb-16 w-full">
                   <div className="h-full w-full min-h-full">
-                  {/*  <Editor editorRef={editorRef} isSidebarOpen={isOpen} /> */ }
+                  <EditorComponent 
+                    editorRef={editorRef} 
+                    isSidebarOpen={isOpen} 
+                  />
                   </div>
                 </ScrollArea>
                 <div className="absolute bottom-4 right-4">

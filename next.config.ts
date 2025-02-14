@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    turbo: {
+      rules: {
+        // Add any specific Turbopack rules if needed
+      }
+    }
+  }
 };
 
 export default nextConfig;

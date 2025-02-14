@@ -1,0 +1,746 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: hsl(0, 0%, 99%);
+        --foreground: hsl(228, 7%, 14%);
+        --card: hsl(0 0% 100%);
+        --card-foreground: hsl(222 47% 11%);
+        --popover: hsl(0 0% 100%);
+        --popover-foreground: hsl(222 47% 11%);
+        --primary: hsl(221 83% 53%);
+        --primary-foreground: hsl(210 40% 98%);
+        --secondary: hsl(210 40% 96%);
+        --secondary-foreground: hsl(222 47% 11%);
+        --muted: hsl(210 40% 96%);
+        --muted-foreground: hsl(215 16% 47%);
+        --accent: hsl(210 40% 96%);
+        --accent-foreground: hsl(222 47% 11%);
+        --destructive: hsl(0 84% 60%);
+        --destructive-foreground: hsl(210 40% 98%);
+        --border: hsl(214 32% 91%);
+        --input: hsl(214 32% 91%);
+        --ring: hsl(221 83% 53%);
+        --radius: 0.5rem;
+        --black: #000000;
+        --white: #ffffff;
+        --code-text: #6e3906;
+        --code-background: #f7f6f3;
+        --drag-hover: #ececec;
+        --copy-text: "Copy";
+        --copy-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'%3E%3C/path%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'%3E%3C/rect%3E%3C/svg%3E");
+    }
+
+    .dark {
+        --background: hsl(222 47% 11%);
+        --foreground: hsl(0, 0%, 100%);
+        --card: hsl(222 47% 11%);
+        --card-foreground: hsl(210 40% 98%);
+        --popover: hsl(222 47% 11%);
+        --popover-foreground: hsl(210 40% 98%);
+        --primary: hsl(210 40% 98%);
+        --primary-foreground: hsl(222 47% 11%);
+        --secondary: hsl(217 32% 17%);
+        --secondary-foreground: hsl(210 40% 98%);
+        --muted: hsl(217 32% 17%);
+        --muted-foreground: hsl(215 20% 65%);
+        --accent: hsl(217 32% 17%);
+        --accent-foreground: hsl(210 40% 98%);
+        --destructive: hsl(0 62% 30%);
+        --destructive-foreground: hsl(210 40% 98%);
+        --border: hsl(217 32% 17%);
+        --input: hsl(217 32% 17%);
+        --ring: hsl(224 76% 48%);
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+
+    h1 {
+        @apply text-4xl font-bold mb-4;
+    }
+
+    h2 {
+        @apply text-3xl font-bold mb-3;
+    }
+
+    h3 {
+        @apply text-2xl font-bold mb-2;
+    }
+
+    h4 {
+        @apply text-xl font-bold mb-1;
+    }
+}
+
+@layer utilities {
+    .border-border {
+        border-color: var(--border);
+    }
+
+    .bg-background {
+        background-color: var(--background);
+    }
+}
+
+.ProseMirror {
+    min-height: 100%;
+    height: 100%;
+    width: 100%;
+    padding: 1rem;
+    padding-left: 15%;
+    padding-right: 15%;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+    color: #adb5bd;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+}
+
+.tiptap-editor {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.tiptap p {
+    min-height: 1rem;
+}
+
+.tiptap-editor p {
+    margin: 0;
+    padding: 0;
+}
+
+.tiptap-editor-paragraph {
+    margin: 0;
+    padding: 0;
+}
+
+.tiptap-editor:focus {
+    outline: none;
+    border: none;
+}
+
+.tiptap-editor [contenteditable="true"]:focus {
+    outline: none;
+    border: none;
+}
+
+/* Slash Command Suggestion Styles */
+
+.slash-commands-popup {
+    background: var(--popover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 50;
+}
+
+.slash-command-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    gap: 8px;
+    color: var(--foreground);
+}
+
+.slash-command-item:hover {
+    background: var(--accent);
+}
+
+.slash-command-icon {
+    font-family: monospace;
+    background: var(--muted);
+    padding: 2px 6px;
+    border-radius: var(--radius);
+    font-size: 12px;
+}
+
+.slash-command-name {
+    font-weight: 500;
+}
+
+.slash-command-description {
+    color: var(--muted-foreground);
+    font-size: 0.9em;
+    margin-left: auto;
+}
+
+.prose {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+.prose ul {
+    list-style-type: disc !important;
+    padding-left: 1.5em !important;
+    color: currentColor !important;
+}
+
+.prose li {
+    padding-left: 0.5em !important;
+}
+
+.flyout-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    background-color: var(--background);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+.flyout-menu.open {
+    transform: translateX(0);
+}
+
+.panel-right-clickable {
+    color: var(--foreground);
+    height: 1.2rem;
+    width: 1.2rem;
+    cursor: pointer;
+}
+
+/* Style the button directly */
+#close-button {
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    font-size: 1.5em;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+/* If the X icon needs specific styling, apply it here */
+#close-button .lucide-x {
+    width: .85em;
+    /* Adjust size as needed */
+    height: .85em;
+    color: currentColor;
+    /* Inherit color from the button */
+}
+
+#expand-button {
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    font-size: 1.5em;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+#expand-button .lucide-x {
+    width: .85em;
+    /* Adjust size as needed */
+    height: .85em;
+    color: currentColor;
+    /* Inherit color from the button */
+}
+
+/* Dynamic Command Styles */
+.editor-heading-1 {
+    @apply text-4xl font-bold mb-6 text-foreground;
+    line-height: 1.2;
+}
+
+.editor-heading-2 {
+    @apply text-3xl font-semibold mb-4 text-foreground;
+    line-height: 1.3;
+}
+
+.editor-blockquote {
+    @apply pl-4 border-l-4 border-primary italic my-4 text-muted-foreground;
+}
+
+.editor-code-block {
+    @apply bg-muted text-muted-foreground p-4 rounded-md font-mono text-sm my-4;
+    tab-size: 2;
+}
+
+.editor-ordered-list {
+    @apply list-decimal pl-6 my-4 space-y-2 text-foreground;
+}
+
+.editor-paragraph {
+    @apply my-3 leading-relaxed text-foreground;
+}
+
+/* Ensure proper nesting of lists */
+.editor-ordered-list .editor-ordered-list {
+    @apply ml-4;
+}
+
+/* Add smooth transitions for better UX */
+.ProseMirror * {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Improve focus states */
+.ProseMirror *:focus {
+    @apply outline-none ring-2 ring-primary ring-opacity-50;
+}
+
+/* Enhance code block appearance */
+.editor-code-block pre {
+    @apply overflow-x-auto;
+}
+
+/* Add spacing between list items */
+.editor-ordered-list li {
+    @apply mb-1;
+}
+
+/* Style nested blockquotes */
+.editor-blockquote .editor-blockquote {
+    @apply border-opacity-50;
+}
+
+/* Code Block */
+.prose code {
+    position: relative;
+    background: var(--code-background, #f7f6f3) !important;
+    color: var(--code-text, #99510e) !important;
+    font-family: 'JetBrainsMono', monospace !important;
+    margin: .2rem !important;
+    padding: 1.2rem !important;
+    display: inline-block !important;
+    font-size: 0.8rem;
+    width: 75%;
+}
+
+/* Default state */
+.prose code::before {
+    content: var(--copy-text, "Copy");
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: white;
+    padding: 0.2rem 0.5rem;
+    padding-left: 1.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--foreground);
+    cursor: pointer;
+    font-family: system-ui, -apple-system, sans-serif;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    opacity: 0.7;
+    transition: all 0.2s;
+    background-image: var(--copy-icon, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'%3E%3C/path%3E%3Crect x='8' y='2' width='8' height='4' rx='1' ry='1'%3E%3C/rect%3E%3C/svg%3E"));
+    background-repeat: no-repeat;
+    background-position: 0.4rem center;
+    background-size: 0.875rem;
+}
+
+/* Hover state */
+.prose code:hover::before {
+    opacity: 1;
+}
+
+/* Click animation */
+.prose code:active::before {
+    transform: scale(0.95);
+}
+
+/* Replace the problematic animations */
+[data-state="closed"] {
+    animation: slideOutToTop 0.2s ease-out;
+}
+
+[data-state="open"] {
+    animation: slideInFromTop 0.2s ease-in;
+}
+
+/* Drop cursor styles */
+.ProseMirror-dropcursor {
+    border-top: 3px solid var(--primary) !important;
+    /* Use primary color instead of drag-hover */
+    margin-top: -2px;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+    z-index: 50;
+}
+
+/* When dragging is active */
+.ProseMirror.dragging .ProseMirror-dropcursor {
+    opacity: 1;
+    transition: opacity 0.2s;
+}
+
+/* Add the keyframe animations */
+@keyframes slideOutToTop {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-48%);
+    }
+}
+
+@keyframes slideInFromTop {
+    from {
+        transform: translateY(-48%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.cursor-move {
+    cursor: move;
+    user-select: none;
+}
+
+.cursor-move:active {
+    cursor: grabbing;
+}
+
+.selection-box {
+    background-color: rgba(59, 130, 246, 0.2);
+    /* Light blue color */
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    position: absolute;
+    z-index: 1000;
+}
+
+.selectable {
+    transition: background-color 0.2s ease;
+}
+
+.selectable.selected {
+    background-color: rgba(59, 130, 246, 0.1);
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+}
+
+/* Ensure the contenteditable div takes full width */
+.tiptap {
+    width: 100%;
+    position: relative;
+}
+
+/* This ensures the text content stays at the desired width while div spans full width */
+.tiptap.ProseMirror.prose {
+    width: 100%;
+    margin: 0;
+    /* Remove auto margins */
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+[data-drag-handle] {
+    cursor: grab !important;
+}
+
+[data-drag-handle]:active {
+    cursor: grabbing !important;
+}
+
+.ProseMirror.dragging {
+    cursor: grabbing !important;
+    background-color: var(--drag-hover);
+    outline: var(--drag-hover) !important;
+}
+
+/* Overwrite tippy-box original max-width */
+
+.tippy-box {
+    max-width: 400px !important;
+}
+
+.ProseMirror:not(.dragging) .ProseMirror-selectednode {
+    outline: var(--drag-hover) !important;
+    background-color: var(--drag-hover);
+    transition: background-color 0.2s;
+    box-shadow: none;
+}
+
+.ProseMirror-selectednode {
+    outline: var(--drag-hover) !important;
+    background-color: var(--drag-hover);
+    transition: background-color 0.2s;
+    box-shadow: none;
+}
+
+.drag-handle {
+    position: fixed;
+    opacity: 10;
+    transition: opacity ease-in 0.3s;
+    border-radius: 0.25rem;
+    background-image: url("data:image/svg+xml,%3csvg stroke-width='2' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' stroke='%23B1B0AF' fill='none' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3e%3ccircle cx='7' cy='4' r='1'/%3e%3ccircle cx='7' cy='11' r='1'/%3e%3ccircle cx='7' cy='18' r='1'/%3e%3ccircle cx='15' cy='4' r='1'/%3e%3ccircle cx='15' cy='11' r='1'/%3e%3ccircle cx='15' cy='18' r='1'/%3e%3c/svg%3e");
+    background-size: calc(0.6em + 0.4rem) calc(0.6em + 0.4rem);
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 1rem;
+    height: 1.5rem;
+    z-index: 50;
+    cursor: grab;
+
+
+    &:hover {
+        background-color: #F3F3F3;
+        border-radius: 0.25rem;
+    }
+
+    &:active {
+        background-color: var(--novel-stone-200);
+        transition: background-color 0.2s;
+        cursor: grabbing;
+    }
+
+    &.hide {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    @media screen and (max-width: 600px) {
+        display: none;
+        pointer-events: none;
+    }
+}
+
+.dark .drag-handle {
+    background-image: url("data: image/svg+xml, %3csvg stroke-width='2' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='%23B1B0AF' fill='none' stroke-linecap='round' stroke-linejoin='round' %3e%3cpath stroke='none' d='M0 0h24v24H0z' fill='none' /%3e%3ccircle cx='9' cy='5' r='1' /%3e%3ccircle cx='9' cy='12' r='1' /%3e%3ccircle cx='9' cy='19' r='1' /%3e%3ccircle cx='15' cy='5' r='1' /%3e%3ccircle cx='15' cy='12' r='1' /%3e%3ccircle cx='15' cy='19' r='1' /%3e%3c/svg%3e");
+}
+
+/* Custom Youtube Video CSS */
+iframe {
+    border: 8px solid #ffd00027;
+    border-radius: 4px;
+    min-width: 200px;
+    min-height: 200px;
+    display: block;
+    outline: 0px solid transparent;
+}
+
+div[data-youtube-video]>iframe {
+    cursor: move;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+}
+
+.ProseMirror-selectednode iframe {
+    transition: outline 0.15s;
+    outline: 6px solid #fbbf24;
+    background-color: var(--drag-hover);
+}
+
+.chevron-down {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    vertical-align: middle;
+    margin-left: 5px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid currentColor;
+}
+
+/* Task list specific styles */
+ul[data-type="taskList"] {
+    list-style: none;
+    margin-left: 0;
+    padding: 0;
+
+    li {
+        align-items: flex-start;
+        display: flex;
+
+        >label {
+            flex: 0 0 auto;
+            margin-right: 0.5rem;
+            user-select: none;
+        }
+
+        >div {
+            flex: 1 1 auto;
+        }
+    }
+
+    input[type="checkbox"] {
+        cursor: pointer;
+    }
+
+    ul[data-type="taskList"] {
+        margin: 0;
+    }
+}
+
+.task-list-item {
+    list-style-type: none;
+    display: flex;
+    align-items: center;
+}
+
+.task-list-item input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Table-specific styling */
+table {
+    border-collapse: collapse;
+    margin: 0;
+    overflow: hidden;
+    table-layout: fixed;
+    width: 100%;
+
+    td,
+    th {
+        border: 1px solid var(--gray-3);
+        box-sizing: border-box;
+        min-width: 1em;
+        padding: 6px 8px;
+        position: relative;
+        vertical-align: top;
+
+        >* {
+            margin-bottom: 0;
+        }
+    }
+
+    th {
+        background-color: var(--gray-1);
+        font-weight: bold;
+        text-align: left;
+    }
+
+    .selectedCell:after {
+        background: var(--gray-2);
+        content: "";
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: 2;
+    }
+
+    .column-resize-handle {
+        background-color: var(--purple);
+        bottom: -2px;
+        pointer-events: none;
+        position: absolute;
+        right: -2px;
+        top: 0;
+        width: 4px;
+    }
+}
+
+.tableWrapper {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+}
+
+&.resize-cursor {
+    cursor: ew-resize;
+    cursor: col-resize;
+}
+
+.copy-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #252525;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    animation: slideUp 0.3s ease-out;
+}
+
+.copy-toast svg {
+    width: 16px;
+    height: 16px;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+/* Code styling */
+.hljs-comment,
+.hljs-quote {
+    color: #616161;
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-attribute,
+.hljs-tag,
+.hljs-regexp,
+.hljs-link,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+    color: #f98181;
+}
+
+.hljs-number,
+.hljs-meta,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params {
+    color: #fbbc88;
+}
+
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet {
+    color: #b9f18d;
+}
+
+.hljs-title,
+.hljs-section {
+    color: #faf594;
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+    color: #70cff8;
+}
+
+.hljs-emphasis {
+    font-style: italic;
+}
+
+.hljs-strong {
+    font-weight: 700;
+}

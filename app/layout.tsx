@@ -4,6 +4,7 @@ import "./Styles/globals.css";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FlyoutMenu } from "./Components/FlyoutMenu/FlyoutMenu";
 import { GrammarlyCleanup } from './utils/grammarlyCleaner'
+import "./Styles/editorStyles.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
