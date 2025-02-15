@@ -148,13 +148,13 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-56 bg-white shadow-md border rounded-md"
+      className="fixed z-50 w-[12rem] bg-white shadow-md border rounded-md"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
       }}
     >
-      <div className="max-h-[155px] overflow-y-auto p-1">
+      <div className="max-h-[300px] overflow-y-auto p-2">
         <CommandList
           isOpen={true}
           commands={filteredCommands}
