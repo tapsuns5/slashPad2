@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for user roles and account types
+enum UserRole {
+  USER
+  ADMIN
+  OWNER
+}
+
+enum CalendarProvider {
+  GOOGLE
+  MICROSOFT
+}
+
+// User model with authentication, workspace, and role management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   // Use hashing in application logic
+  role      UserRole @default(USER)
+  
+  // Workspace isolation
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  
+  // Authentication and tracking
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  notes     Note[]
+  calendars CalendarIntegration[]
+}
+
+// Workspace model for multi-tenant SAAS
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  users     User[]
+  notes     Note[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Note model with unique slug and block support
+model Note {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique // Public-facing unique identifier
+  content     String?
+  
+  // Relationships
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  
+  blocks      Block[]
+  
+  // Calendar event associations
+  calendarEvents CalendarEvent[]
+  
+  // Metadata
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Block model for granular content within notes
+model Block {
+  id          String   @id @default(cuid())
+  content     String
+  slug        String   // Unique identifier for specific block within a note
+  
+  // Relationships
+  noteId      String
+  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  type        String?  // e.g., text, todo, code, etc.
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([noteId, slug])
+}
+
+// Calendar Integration model
+model CalendarIntegration {
+  id            String          @id @default(cuid())
+  provider      CalendarProvider
+  accessToken   String
+  refreshToken  String
+  
+  // Relationships
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  
+  // Calendar events
+  events        CalendarEvent[]
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+// Calendar Event model
+model CalendarEvent {
+  id            String   @id @default(cuid())
+  externalId    String   // ID from Google or Microsoft calendar
+  title         String
+  description   String?
+  startTime     DateTime
+  endTime       DateTime
+  
+  // Relationships
+  calendarIntegrationId String
+  calendarIntegration   CalendarIntegration @relation(fields: [calendarIntegrationId], references: [id])
+  
+  // Optional note association
+  noteId        String?
+  note          Note?    @relation(fields: [noteId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
