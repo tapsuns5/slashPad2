@@ -4,9 +4,13 @@ import { Heading1, Heading2, Heading3, List, ListOrdered, TextQuote, Code, Image
 import { Editor } from "@tiptap/react";
 
 export const COMMANDS: Command[] = [
+  { id: "text-group", label: "Text", type: "group" },
   { id: "heading1", label: "H1 Heading 1", icon: <Heading1 strokeWidth={1} />, shortcut: "h1 " },
   { id: "heading2", label: "H2 Heading 2", icon: <Heading2 strokeWidth={1} />, shortcut: "h2 " },
   { id: "heading3", label: "H3 Heading 3", icon: <Heading3 strokeWidth={1} />, shortcut: "h3 " },
+  { id: "paragraph", label: "Paragraph", icon: <Pilcrow strokeWidth={1} />, shortcut: "p" },
+
+  { id: "blocks-group", label: "Blocks", type: "group" },
   { id: "bullet", label: "Bullet List", icon: <List strokeWidth={1} />, shortcut: "* " },
   {
     id: "ordered",
@@ -22,7 +26,6 @@ export const COMMANDS: Command[] = [
   },
   { id: "code", label: "Code", icon: <Code strokeWidth={1} />, shortcut: "```" },
   { id: "tiptapimage", label: "Image", icon: <ImageIcon strokeWidth={1} />, shortcut: "![]" },
-  { id: "paragraph", label: "Paragraph", icon: <Pilcrow strokeWidth={1} />, shortcut: "p" },
   { id: "task", label: "Task", icon: <ListTodo strokeWidth={1} />, shortcut: "- " },
   { id: "table", label: "Table", icon: <Table strokeWidth={1} />, shortcut: "||" },
 ];
