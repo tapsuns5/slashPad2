@@ -21,7 +21,7 @@ import editorExtensions from "./EditorExtensions";
 
 interface EditorContentProps {
   className?: string;
-  editorRef: React.RefObject<Editor | null>;
+  editorRef: ((editor: Editor) => void) | React.RefObject<Editor | null>;
   extensions?: Extension[];
   content?: string;
 }
@@ -86,8 +86,10 @@ const EditorContent: React.FC<EditorContentProps> = ({
 
   useEffect(() => {
     if (editor) {
-      // Directly assign the editor to the ref
-      if (editorRef) {
+      // Handle both ref types
+      if (typeof editorRef === 'function') {
+        editorRef(editor);
+      } else if (editorRef && 'current' in editorRef) {
         editorRef.current = editor;
       }
 
@@ -265,7 +267,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
           isVisible={showCommandList}
           onSelectCommand={() => setShowCommandList(false)}
           onClose={() => setShowCommandList(false)}
-          editor={editorRef.current as Editor}
+          editor={editor}
           filterValue={commandInput}
         />
       )}

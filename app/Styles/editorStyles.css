@@ -818,3 +818,15 @@ table {
 .editor-bullet-list li {
   margin-bottom: 0.5rem;
 }
+
+.custom-drag-handle {
+    margin-left: -10px !important;
+}
+
+[data-drag-handle] {
+    cursor: grab !important;
+}
+
+[data-drag-handle]:active {
+    cursor: grabbing !important;
+}
