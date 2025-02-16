@@ -27,19 +27,28 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { all, createLowlight } from "lowlight";
+import Details from '@tiptap-pro/extension-details'
+import DetailsContent from '@tiptap-pro/extension-details-content'
+import DetailsSummary from '@tiptap-pro/extension-details-summary'
 
 const lowlight = createLowlight(all);
 
 const editorExtensions: AnyExtension[] = [
   StarterKit.configure({
     bulletList: false,
+    orderedList: false,
+    listItem: false,
   }),
   Document,
   Paragraph,
   Text,
   HardBreak,
   Blockquote,
-  BulletList,
+  BulletList.configure({
+    HTMLAttributes: {
+      class: 'editor-bullet-list',
+    },
+  }),
   OrderedList,
   ListItem,
   Link,
@@ -73,6 +82,14 @@ const editorExtensions: AnyExtension[] = [
   CodeBlockLowlight.configure({
     lowlight,
   }),
+  Details.configure({
+    persist: true,
+    HTMLAttributes: {
+      class: "details",
+    },
+  }),
+  DetailsContent,
+  DetailsSummary,
 ];
 
 export default editorExtensions;

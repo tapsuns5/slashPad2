@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { CommandList, Command } from "./CommandList";
-import { Heading1, Heading2, Heading3, List, ListOrdered, TextQuote, Code, ImageIcon, Pilcrow, ListTodo, Table } from "lucide-react";
+import { Heading1, Heading2, Heading3, List, ListOrdered, TextQuote, Code, ImageIcon, Pilcrow, ListTodo, Table, ListCollapse } from "lucide-react";
 import { Editor } from "@tiptap/react";
 
 export const COMMANDS: Command[] = [
@@ -28,6 +28,8 @@ export const COMMANDS: Command[] = [
   { id: "tiptapimage", label: "Image", icon: <ImageIcon strokeWidth={1} />, shortcut: "![]" },
   { id: "task", label: "Task", icon: <ListTodo strokeWidth={1} />, shortcut: "- " },
   { id: "table", label: "Table", icon: <Table strokeWidth={1} />, shortcut: "||" },
+  { id: "details", label: "Details", icon: <ListCollapse strokeWidth={1} />, shortcut: ">" },
+  
 ];
 
 interface CommandMenuProps {
@@ -58,7 +60,7 @@ export const executeCommand = (command: Command, editor: Editor) => {
 
     switch (command.id) {
       case "bullet":
-        chain.toggleBulletList().run();
+        chain.focus().toggleBulletList().run();
         break;
       case "heading1":
         chain.toggleHeading({ level: 1 }).run();
@@ -83,6 +85,14 @@ export const executeCommand = (command: Command, editor: Editor) => {
         break;
       case "table":
         chain.insertTable({ rows: 3, cols: 3 }).run();
+        break;
+      case "details":
+        chain
+          .focus()
+          .clearNodes()
+          .unsetAllMarks()
+          .setDetails()
+          .run();
         break;
       default:
         console.log("Unknown command:", command.id);
