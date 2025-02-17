@@ -25,14 +25,11 @@ import Table from '@tiptap/extension-table';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { all, createLowlight } from "lowlight";
 import Details from '@tiptap-pro/extension-details'
 import DetailsContent from '@tiptap-pro/extension-details-content'
 import DetailsSummary from '@tiptap-pro/extension-details-summary'
 import UniqueID from '@tiptap-pro/extension-unique-id'
 
-const lowlight = createLowlight(all);
 
 const editorExtensions: AnyExtension[] = [
   StarterKit.configure({
@@ -80,9 +77,6 @@ const editorExtensions: AnyExtension[] = [
   TableHeader,
   TableRow,
   TableCell,
-  CodeBlockLowlight.configure({
-    lowlight,
-  }),
   Details.configure({
     persist: true,
     HTMLAttributes: {
