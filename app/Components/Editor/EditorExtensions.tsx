@@ -30,6 +30,7 @@ import { all, createLowlight } from "lowlight";
 import Details from '@tiptap-pro/extension-details'
 import DetailsContent from '@tiptap-pro/extension-details-content'
 import DetailsSummary from '@tiptap-pro/extension-details-summary'
+import UniqueID from '@tiptap-pro/extension-unique-id'
 
 const lowlight = createLowlight(all);
 
@@ -90,6 +91,15 @@ const editorExtensions: AnyExtension[] = [
   }),
   DetailsContent,
   DetailsSummary,
+  UniqueID.configure({
+    types: ["heading", "paragraph", "bulletList", "orderedList", "taskList", "table", "details", "codeBlock", "taskItem", "tableRow", "tableCell"],
+    attributeName: "uid",
+    generateID: () => {
+      const uid = crypto.randomUUID(); // Use native UUID generation
+      console.log('Generated UID:', uid);
+      return uid;
+    },
+  }),
 ];
 
 export default editorExtensions;

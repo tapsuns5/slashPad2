@@ -19,6 +19,31 @@ import { Badge } from "@/components/ui/badge";
 import { initializeClipboardCopy } from "@/app/utils/clipboardCopy";
 import editorExtensions from "./EditorExtensions";
 
+// Define types for node attributes and details
+type NodeAttributes = {
+  uid?: string;  // Optional UID
+  level?: number;  // For headings
+  checked?: boolean;  // For task list items
+  [key: string]: string | number | boolean | undefined;  // Allow other potential attributes
+};
+
+type NodeDetail = {
+  type: string;
+  position: number;
+  content: string;
+  attributes: NodeAttributes & {
+    hasUID: boolean;
+  };
+};
+
+type NodeWithAttributes = {
+  type: string;
+  position: number;
+  attributes: NodeAttributes;
+  hasUID: boolean;
+  uidValue?: string;
+};
+
 interface EditorContentProps {
   className?: string;
   editorRef: ((editor: Editor) => void) | React.RefObject<Editor | null>;
@@ -60,6 +85,67 @@ const EditorContent: React.FC<EditorContentProps> = ({
   const editor = useEditor({
     extensions: extensions || editorExtensions,
     content: content || "<p></p>", // Use provided content or default
+    onCreate: ({ editor }) => {
+      // Log all available node types
+      const nodeTypes = new Set<string>();
+      const nodeDetails: NodeDetail[] = [];
+      editor.state.doc.descendants((node, pos) => {
+        nodeTypes.add(node.type.name);
+        nodeDetails.push({
+          type: node.type.name,
+          position: pos,
+          content: node.textContent || '',
+          attributes: {
+            ...node.attrs as NodeAttributes,
+            hasUID: !!node.attrs.uid
+          }
+        });
+      });
+      console.log('Available Node Types:', Array.from(nodeTypes));
+      console.log('Node Details:', nodeDetails);
+
+      // Detailed extension logging
+      const extensionDetails = editor.extensionManager.extensions.map(ext => ({
+        name: ext.name,
+        type: ext.constructor.name,
+        options: ext.options
+      }));
+      console.log('All Extensions:', extensionDetails);
+
+      // Comprehensive node traversal with detailed logging
+      const nodesWithAttributes: NodeWithAttributes[] = [];
+      editor.state.doc.descendants((node, pos) => {
+        nodesWithAttributes.push({
+          type: node.type.name,
+          position: pos,
+          attributes: node.attrs as NodeAttributes,
+          hasUID: !!node.attrs.uid,
+          uidValue: node.attrs.uid
+        });
+      });
+
+      console.log('Node Attributes Debug:', nodesWithAttributes);
+
+      // Specific UniqueID extension logging
+      const uniqueIDExtension = editor.extensionManager.extensions.find(ext => ext.name === 'uniqueID');
+      if (uniqueIDExtension) {
+        console.log('UniqueID Extension Details:', {
+          name: uniqueIDExtension.name,
+          options: uniqueIDExtension.options
+        });
+      } else {
+        console.warn('UniqueID Extension NOT FOUND');
+      }
+
+      // Attempt to manually add UIDs
+      editor.state.doc.descendants((node) => {
+        console.log('Node Type Inspection:', {
+          type: node.type.name,
+          attrs: node.attrs,
+          hasUID: node.attrs.uid !== undefined
+        });
+      });
+    },
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
       
