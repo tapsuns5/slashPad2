@@ -49,13 +49,115 @@ interface EditorContentProps {
   editorRef: ((editor: Editor) => void) | React.RefObject<Editor | null>;
   extensions?: Extension[];
   content?: string;
+  noteId?: string;
 }
+
+// Define a specific type for block metadata
+type BlockMetadata = {
+  lastEditedAt?: string;
+  contentType?: string;
+  position?: number;
+  tags?: string[];
+  attributes?: Record<string, string | number | boolean>;
+  createdBy?: string;
+  [key: string]: unknown; // Allow some flexibility for future extensions
+};
+
+const saveBlockContent = async (
+  blockPayload: {
+    content: string;
+    noteId: string;
+    metadata?: BlockMetadata;
+  }
+) => {
+  // Validate payload before sending
+  if (!blockPayload.content) {
+    console.warn('Attempted to save with null or undefined content');
+    return null;
+  }
+
+  if (!blockPayload.noteId) {
+    console.warn('Attempted to save block without a noteId');
+    return null;
+  }
+
+  // Prepare metadata for backend
+  const metadata: BlockMetadata = {
+    lastEditedAt: new Date().toISOString(),
+    contentType: 'text', // Default content type
+    ...(blockPayload.metadata || {}) // Spread existing metadata
+  };
+
+  // Create final payload with standardized metadata
+  const finalPayload = {
+    ...blockPayload,
+    metadata
+  };
+
+  // Log the full payload details
+  console.log('Detailed block payload:', {
+    content: finalPayload.content,
+    contentLength: finalPayload.content.length,
+    noteId: finalPayload.noteId,
+    metadata: JSON.stringify(finalPayload.metadata),
+    contentType: typeof finalPayload.content
+  });
+
+  try {
+    const response = await fetch('/api/blocks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(finalPayload)
+    });
+
+    console.log('Save response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    // Check for non-OK responses before parsing
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Save block error response text:', errorText);
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('Parsed error data:', errorData);
+        
+        // Throw a more informative error
+        throw new Error(
+          errorData.details?.message || 
+          errorData.error || 
+          'Failed to save block'
+        );
+      } catch (parseError) {
+        console.error('Failed to parse error response:', parseError);
+        throw new Error(`HTTP error ${response.status}: ${errorText}`);
+      }
+    }
+
+    // Safely parse JSON
+    try {
+      const newBlock = await response.json();
+      console.log('Block saved successfully:', newBlock);
+      return newBlock;
+    } catch (jsonError) {
+      console.error('JSON parsing error:', jsonError);
+      console.log('Response text:', await response.text());
+      throw new Error('Failed to parse server response');
+    }
+  } catch (error) {
+    console.error('Error saving block:', error);
+    throw error;
+  }
+};
 
 const EditorContent: React.FC<EditorContentProps> = ({
   editorRef,
   className,
   extensions,
-  content
+  content,
+  noteId
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -81,6 +183,79 @@ const EditorContent: React.FC<EditorContentProps> = ({
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // State to track saving status
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Debug logging for noteId
+  useEffect(() => {
+    console.log('EditorContent noteId:', noteId);
+    
+    // Validate noteId
+    const validateNote = async () => {
+      if (!noteId) {
+        console.error('No noteId provided');
+        setSaveError('No note ID available');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/notes/${noteId}`);
+        if (!response.ok) {
+          console.error('Note does not exist:', noteId);
+          setSaveError(`Note with ID ${noteId} not found`);
+        }
+      } catch (error) {
+        console.error('Error validating note:', error);
+        setSaveError('Failed to validate note');
+      }
+    };
+
+    validateNote();
+  }, [noteId]);
+
+  const autoSaveContent = useCallback(async (content: string) => {
+    console.log('Auto save triggered:', {
+      contentLength: content.length,
+      noteId,
+      rawContent: content,
+      contentType: typeof content,
+      contentIsNull: content === null,
+      contentIsUndefined: content === undefined
+    });
+
+    // Prevent saving if noteId is not available
+    if (!noteId) {
+      console.warn('No noteId provided, skipping save');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+
+      // Ensure content is a string and create a valid payload
+      const contentToSave = content || '<p></p>';
+      const blockPayload = {
+        content: contentToSave,
+        noteId: noteId,
+        metadata: {
+          lastEditedAt: new Date().toISOString(),
+          contentType: contentToSave === '<p></p>' ? 'empty_paragraph' : 'text'
+        }
+      };
+
+      console.log('Block payload:', JSON.stringify(blockPayload, null, 2));
+
+      await saveBlockContent(blockPayload);
+    } catch (error) {
+      console.error('Block save failed:', error);
+      setSaveError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [noteId]);
 
   const editor = useEditor({
     extensions: extensions || editorExtensions,
@@ -149,9 +324,18 @@ const EditorContent: React.FC<EditorContentProps> = ({
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
       
-      // Only update localStorage on client-side
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("editorContent", content);
+      console.log('Editor content updated:', {
+        contentLength: content.length,
+        noteId
+      });
+
+      // Only update localStorage and attempt save on client-side
+      if (typeof window !== 'undefined' && noteId) {
+        // Save to local storage
+        localStorage.setItem(`editorContent-${noteId}`, content);
+        
+        // Automatically save to database
+        autoSaveContent(content);
       }
     },
     immediatelyRender: false, // Add this line to resolve SSR hydration warning
@@ -269,6 +453,17 @@ const EditorContent: React.FC<EditorContentProps> = ({
     }
   };
 
+  // Render saving status
+  const renderSavingStatus = () => {
+    if (isSaving) {
+      return <div className="text-gray-500 text-sm">Saving...</div>;
+    }
+    if (saveError) {
+      return <div className="text-red-500 text-sm">Save failed: {saveError}</div>;
+    }
+    return null;
+  };
+
   // Only render on client
   if (!isClient || !editor) {
     return null;
@@ -357,6 +552,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
           filterValue={commandInput}
         />
       )}
+      {renderSavingStatus()}
     </div>
   );
 };

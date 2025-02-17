@@ -17,6 +17,7 @@ interface EditorProps {
   isSidebarOpen?: boolean;
   extensions?: Extension[];
   content?: string;
+  noteId?: string;
 }
 
 const EditorComponent: React.FC<EditorProps> = ({ 
@@ -29,6 +30,9 @@ const EditorComponent: React.FC<EditorProps> = ({
   const [isClient, setIsClient] = React.useState(false);
   const [editorInstance, setEditorInstance] = React.useState<Editor | null>(null);
   const dragHandleRef = React.useRef<HTMLDivElement>(null);
+
+  // Hardcoded test noteId for development
+  const TEST_NOTE_ID = 'test-note-001';
 
   React.useEffect(() => {
     setIsClient(true);
@@ -55,6 +59,7 @@ const EditorComponent: React.FC<EditorProps> = ({
         editorRef={handleEditorReady} 
         extensions={extensions}
         content={content}
+        noteId={TEST_NOTE_ID} // Use the hardcoded test note ID
       />
       {editorInstance && (
         <DragHandle 

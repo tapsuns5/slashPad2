@@ -1,7 +1,8 @@
 {
-  "name": "my-next-app",
+  "name": "slashpad2",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -10,7 +11,16 @@
     "prisma:dev": "dotenv -e .env.development prisma migrate dev",
     "prisma:staging": "dotenv -e .env.staging prisma migrate deploy",
     "prisma:prod": "dotenv -e .env.production prisma migrate deploy",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "dotenv -e .env.local -- node --loader ts-node/esm prisma/seed.ts",
+    "prisma:migrate:dev": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_dev?schema=public prisma migrate dev",
+    "prisma:migrate:staging": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_staging?schema=public prisma migrate dev",
+    "prisma:migrate:prod": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_prod?schema=public prisma migrate dev",
+    "prisma:reset:dev": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_dev?schema=public prisma migrate reset --force",
+    "prisma:reset:dev:noseed": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_dev?schema=public prisma migrate reset --force --skip-seed"
+  },
+  "prisma": {
+    "seed": "dotenv -e .env.local -- node --loader ts-node/esm prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",
@@ -28,7 +38,6 @@
     "@tiptap-pro/extension-drag-handle-react": "^2.17.4",
     "@tiptap-pro/extension-node-range": "^2.17.4",
     "@tiptap-pro/extension-unique-id": "^2.17.4",
-    "@tiptap/extension-code-block-lowlight": "^2.11.5",
     "@tiptap/extension-collaboration": "^2.11.5",
     "@tiptap/extension-color": "^2.11.5",
     "@tiptap/extension-document": "^2.11.5",
@@ -48,12 +57,10 @@
     "@tiptap/starter-kit": "^2.11.5",
     "@types/date-fns": "^2.5.3",
     "@types/lowlight": "^0.0.7",
+    "@types/uuid": "^10.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "dotenv": "^16.4.7",
-    "dotenv-cli": "^8.0.0",
-    "lowlight": "^3.3.0",
     "lucide-react": "^0.475.0",
     "next": "15.1.7",
     "prisma": "^6.3.1",
@@ -61,20 +68,25 @@
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.0.5",
     "y-prosemirror": "^1.2.15",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.23"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^20.17.19",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
+    "dotenv": "^16.4.7",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "postcss": "^8.5.2",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }

@@ -92,6 +92,7 @@ model Block {
   // Metadata
   type        String?  // e.g., text, todo, code, etc.
   order       Int      @default(0)
+  metadata    Json?    // Add JSON metadata field
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
