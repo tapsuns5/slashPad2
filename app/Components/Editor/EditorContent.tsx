@@ -53,15 +53,21 @@ interface EditorContentProps {
   noteId?: string;
 }
 
-// Define a specific type for block metadata
+// Define precise types for block and content
 type BlockMetadata = {
-  lastEditedAt?: string;
   contentType?: string;
-  position?: number;
-  tags?: string[];
-  attributes?: Record<string, string | number | boolean>;
-  createdBy?: string;
-  [key: string]: unknown; // Allow some flexibility for future extensions
+  lastEditedAt?: string;
+};
+
+type Block = {
+  id?: string;
+  content?: string | {
+    content?: string;
+    [key: string]: unknown;
+  };
+  metadata?: BlockMetadata;
+  updatedAt?: string;
+  noteId?: string;
 };
 
 // Robust useDebounce hook with improved type handling
@@ -244,32 +250,6 @@ const EditorContent: React.FC<EditorContentProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Debug logging for noteId
-  useEffect(() => {
-    console.log('EditorContent noteId:', noteId);
-    
-    // Validate noteId
-    const validateNote = async () => {
-      if (!noteId) {
-        console.error('No noteId provided');
-        setSaveError('No note ID available');
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/notes/${noteId}`);
-        if (!response.ok) {
-          console.error('Note does not exist:', noteId);
-          setSaveError(`Note with ID ${noteId} not found`);
-        }
-      } catch (error) {
-        console.error('Error validating note:', error);
-        setSaveError('Failed to validate note');
-      }
-    };
-
-    validateNote();
-  }, [noteId]);
 
   // State to track the current block ID
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(null);
@@ -461,6 +441,185 @@ const EditorContent: React.FC<EditorContentProps> = ({
       },
     },
   });
+
+  // Debug logging function with type-safe parameters
+  const debugLog = (message: string, ...args: Array<string | number | object | boolean | null | undefined>): void => {
+    console.log(`[EditorContent Debug] ${message}`, ...args);
+  };
+
+  // Utility function to extract content from various possible formats
+  const extractContent = (block: Block): string | null => {
+    // Direct content string
+    if (typeof block.content === 'string') {
+      return block.content;
+    }
+
+    // Nested content object
+    if (typeof block.content === 'object' && block.content !== null) {
+      if (typeof block.content.content === 'string') {
+        return block.content.content;
+      }
+    }
+
+    return null;
+  };
+
+  // Effect to fetch and set content
+  useEffect(() => {
+    const fetchAndSetContent = async () => {
+      debugLog('Starting fetchAndSetContent', { noteId, editorExists: !!editor });
+
+      if (!noteId) {
+        debugLog('No noteId provided');
+        return;
+      }
+
+      try {
+        debugLog(`Fetching block content for noteId: ${noteId}`);
+        
+        const response = await fetch(`/api/blocks?noteId=${noteId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        debugLog('Fetch response status', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          debugLog('Fetch error', { 
+            status: response.status, 
+            statusText: response.statusText, 
+            errorText 
+          });
+          return;
+        }
+
+        const data: Block[] = await response.json();
+        debugLog('Fetched block data', data);
+
+        // Find the most recent block with content
+        let mostRecentContent: string | null = null;
+        let mostRecentTimestamp = 0;
+
+        // Iterate through blocks to find the most recent content
+        data.forEach((block) => {
+          const content = extractContent(block);
+          const timestamp = block.metadata?.lastEditedAt 
+            ? new Date(block.metadata.lastEditedAt).getTime()
+            : block.updatedAt
+            ? new Date(block.updatedAt).getTime()
+            : 0;
+
+          if (content && timestamp > mostRecentTimestamp) {
+            mostRecentContent = content;
+            mostRecentTimestamp = timestamp;
+          }
+        });
+
+        // Forcibly set content multiple ways
+        if (mostRecentContent) {
+          debugLog('Most recent content found', mostRecentContent);
+
+          // Multiple attempts to set content
+          if (editor) {
+            debugLog('Attempting to set editor content');
+            editor.commands.setContent(mostRecentContent);
+          }
+        } else {
+          debugLog('No content found in any blocks');
+        }
+      } catch (error) {
+        debugLog('Comprehensive error', {
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorStack: error instanceof Error ? error.stack : 'No stack trace'
+        });
+      }
+    };
+
+    // Attempt to set content immediately and with a slight delay
+    fetchAndSetContent();
+    const timer = setTimeout(fetchAndSetContent, 500);
+
+    // Cleanup
+    return () => clearTimeout(timer);
+  }, [noteId, editor]);
+
+  // Track initial content for setting after editor initialization
+  const [initialContent, setInitialContent] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBlockContent = async () => {
+      if (!noteId) {
+        console.warn('No noteId provided for fetching block content');
+        return;
+      }
+
+      try {
+        console.log(`Fetching block content for noteId: ${noteId}`);
+        
+        const response = await fetch(`/api/blocks?noteId=${noteId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('Fetch response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Fetch block content error:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText
+          });
+          throw new Error(`HTTP error ${response.status}: ${errorText}`);
+        }
+
+        const data: Block[] = await response.json();
+        console.log('Fetched block data:', JSON.stringify(data, null, 2));
+        
+        // Store content for later setting
+        if (data.length > 0) {
+          // Safely extract content as a string
+          const contentToSet = extractContent(data[0]);
+          
+          console.log('Content found, storing for later setting');
+          
+          // Only set if content is a non-null string
+          if (contentToSet) {
+            setInitialContent(contentToSet);
+          }
+        }
+      } catch (error) {
+        console.error('Comprehensive error fetching block content:', {
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorStack: error instanceof Error ? error.stack : 'No stack trace',
+          noteId
+        });
+      }
+    };
+
+    fetchBlockContent();
+  }, [noteId]);
+
+  // Separate effect to set content when editor or initial content changes
+  useEffect(() => {
+    if (editor && initialContent) {
+      console.log('Setting editor content:', initialContent);
+      
+      // Use a slight timeout to ensure editor is fully ready
+      const timer = setTimeout(() => {
+        editor.commands.setContent(initialContent);
+        console.log('Editor content set successfully');
+      }, 100);
+
+      // Cleanup timeout
+      return () => clearTimeout(timer);
+    }
+  }, [editor, initialContent]);
 
   useEffect(() => {
     if (editor) {
