@@ -82,8 +82,8 @@ model Note {
 // Block model for granular content within notes
 model Block {
   id          String   @id @default(cuid())
-  content     String
-  slug        String   // Unique identifier for specific block within a note
+  content     Json     // Change content to Json type
+  slug        String?  // Unique identifier for specific block within a note
   
   // Relationships
   noteId      String
@@ -96,7 +96,7 @@ model Block {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  @@unique([noteId, slug])
+  @@unique([noteId, slug], map: "block_unique_constraint")
 }
 
 // Calendar Integration model

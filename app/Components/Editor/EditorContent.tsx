@@ -18,6 +18,7 @@ import CommandMenu, { executeCommand } from './CommandMenu';
 import { Badge } from "@/components/ui/badge";
 import { initializeClipboardCopy } from "@/app/utils/clipboardCopy";
 import editorExtensions from "./EditorExtensions";
+import { v4 as uuidv4 } from 'uuid';
 
 // Define types for node attributes and details
 type NodeAttributes = {
@@ -63,13 +64,52 @@ type BlockMetadata = {
   [key: string]: unknown; // Allow some flexibility for future extensions
 };
 
-const saveBlockContent = async (
+// Robust useDebounce hook with improved type handling
+const useDebounce = <T,>(
+  value: T, 
+  delay: number, 
+  options: { 
+    leading?: boolean 
+  } = {}
+): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  const { leading = false } = options;
+
+  useEffect(() => {
+    // If value is undefined or null and not leading, return early
+    if ((value === undefined || value === null) && !leading) {
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay, leading]);
+
+  return debouncedValue;
+};
+
+const updateBlockContent = async (
   blockPayload: {
     content: string;
     noteId: string;
+    id?: string;
+    slug: string;
     metadata?: BlockMetadata;
   }
 ) => {
+  // Comprehensive payload validation
+  console.log('Attempting to update block with payload:', blockPayload);
+
+  if (!blockPayload) {
+    console.error('No payload provided');
+    return null;
+  }
+
   // Validate payload before sending
   if (!blockPayload.content) {
     console.warn('Attempted to save with null or undefined content');
@@ -81,6 +121,11 @@ const saveBlockContent = async (
     return null;
   }
 
+  if (!blockPayload.slug) {
+    console.warn('Attempted to save block without a slug');
+    return null;
+  }
+
   // Prepare metadata for backend
   const metadata: BlockMetadata = {
     lastEditedAt: new Date().toISOString(),
@@ -88,68 +133,79 @@ const saveBlockContent = async (
     ...(blockPayload.metadata || {}) // Spread existing metadata
   };
 
-  // Create final payload with standardized metadata
+  // Create final payload with standardized metadata and content
   const finalPayload = {
-    ...blockPayload,
+    content: blockPayload.content,
+    noteId: blockPayload.noteId,
+    slug: blockPayload.slug,
     metadata
   };
 
-  // Log the full payload details
-  console.log('Detailed block payload:', {
-    content: finalPayload.content,
-    contentLength: finalPayload.content.length,
-    noteId: finalPayload.noteId,
-    metadata: JSON.stringify(finalPayload.metadata),
-    contentType: typeof finalPayload.content
-  });
+  console.log('Final payload for block update:', finalPayload);
 
   try {
     const response = await fetch('/api/blocks', {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(finalPayload)
     });
 
-    console.log('Save response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Response status:', response.status);
 
-    // Check for non-OK responses before parsing
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Save block error response text:', errorText);
-      
-      try {
-        const errorData = JSON.parse(errorText);
-        console.error('Parsed error data:', errorData);
-        
-        // Throw a more informative error
-        throw new Error(
-          errorData.details?.message || 
-          errorData.error || 
-          'Failed to save block'
-        );
-      } catch (parseError) {
-        console.error('Failed to parse error response:', parseError);
+      console.error('Update block error response:', {
+        status: response.status,
+        errorText,
+        payload: finalPayload
+      });
+
+      // Additional error handling
+      if (response.status === 404) {
+        throw new Error('Block not found');
+      } else if (response.status === 400) {
+        throw new Error('Invalid block data');
+      } else {
         throw new Error(`HTTP error ${response.status}: ${errorText}`);
       }
     }
 
-    // Safely parse JSON
-    try {
-      const newBlock = await response.json();
-      console.log('Block saved successfully:', newBlock);
-      return newBlock;
-    } catch (jsonError) {
-      console.error('JSON parsing error:', jsonError);
-      console.log('Response text:', await response.text());
-      throw new Error('Failed to parse server response');
+    // Check if response has content before parsing
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const responseData = await response.json();
+      const updatedBlock = responseData.block;
+      
+      console.log('Block updated successfully:', updatedBlock);
+      return updatedBlock;
+    } else {
+      const responseText = await response.text();
+      console.warn('Non-JSON response:', responseText);
+      return null;
     }
   } catch (error) {
-    console.error('Error saving block:', error);
+    console.error('Comprehensive error updating block:', {
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : 'No stack trace',
+      payload: finalPayload
+    });
     throw error;
   }
+};
+
+type BlockPayload = {
+  content: string;
+  noteId: string;
+  slug: string;
+  id?: string;
+  metadata: {
+    lastEditedAt: string;
+    contentType: string;
+  };
+  type: string;
+  order: number;
 };
 
 const EditorContent: React.FC<EditorContentProps> = ({
@@ -215,47 +271,115 @@ const EditorContent: React.FC<EditorContentProps> = ({
     validateNote();
   }, [noteId]);
 
-  const autoSaveContent = useCallback(async (content: string) => {
-    console.log('Auto save triggered:', {
-      contentLength: content.length,
-      noteId,
-      rawContent: content,
-      contentType: typeof content,
-      contentIsNull: content === null,
-      contentIsUndefined: content === undefined
-    });
+  // State to track the current block ID
+  const [currentBlockId, setCurrentBlockId] = useState<string | null>(null);
 
-    // Prevent saving if noteId is not available
-    if (!noteId) {
-      console.warn('No noteId provided, skipping save');
-      return;
-    }
+  const autoSaveContent = useCallback(async (contentToSave: string) => {
+    if (!noteId) return;
 
     try {
       setIsSaving(true);
       setSaveError(null);
 
-      // Ensure content is a string and create a valid payload
-      const contentToSave = content || '<p></p>';
-      const blockPayload = {
+      // Retrieve the last saved block ID from localStorage
+      const lastBlockId = localStorage.getItem(`lastBlockId-${noteId}`);
+
+      const blockUid = uuidv4();
+      const blockPayload: BlockPayload = {
         content: contentToSave,
         noteId: noteId,
+        slug: blockUid,
         metadata: {
           lastEditedAt: new Date().toISOString(),
           contentType: contentToSave === '<p></p>' ? 'empty_paragraph' : 'text'
-        }
+        },
+        type: 'text',
+        order: 0
       };
 
-      console.log('Block payload:', JSON.stringify(blockPayload, null, 2));
+      // If we have a last block ID, add it to the payload
+      if (lastBlockId) {
+        blockPayload.id = lastBlockId;
+      }
 
-      await saveBlockContent(blockPayload);
+      console.log('Block Payload for Saving:', {
+        contentLength: contentToSave.length,
+        contentType: typeof contentToSave,
+        noteId,
+        currentBlockId,
+        blockPayload: JSON.stringify(blockPayload, null, 2)
+      });
+
+      // Attempt to save or update the block
+      const updatedBlock = await updateBlockContent(blockPayload);
+
+      // Store the block ID in localStorage for future updates
+      if (updatedBlock?.id) {
+        localStorage.setItem(`lastBlockId-${noteId}`, updatedBlock.id);
+        setCurrentBlockId(updatedBlock.id);
+      }
     } catch (error) {
       console.error('Block save failed:', error);
       setSaveError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsSaving(false);
     }
-  }, [noteId]);
+  }, [noteId, currentBlockId]);
+
+  // State to track the current content for debouncing
+  const [currentContent, setCurrentContent] = useState<string>('');
+
+  // Debounce the content changes
+  const debouncedContent = useDebounce(currentContent, 500);
+
+  // Effect to trigger auto-save when debounced content changes
+  useEffect(() => {
+    if (debouncedContent && noteId) {
+      autoSaveContent(debouncedContent);
+    }
+  }, [debouncedContent, noteId, autoSaveContent]);
+
+  // Sanitize content before saving
+  const sanitizeContent = useCallback((content: string) => {
+    // Remove data-uid attributes to prevent JSON parsing issues
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    const elementsWithUid = tempDiv.querySelectorAll('[data-uid]');
+    elementsWithUid.forEach(el => el.removeAttribute('data-uid'));
+    
+    // Trim and handle empty content
+    const sanitizedContent = tempDiv.innerHTML.trim() || '<p></p>';
+    
+    console.log('Sanitized Content:', {
+      originalLength: content.length,
+      sanitizedLength: sanitizedContent.length,
+      sanitizedContent
+    });
+    
+    return sanitizedContent;
+  }, []);
+
+  const onEditorUpdate = useCallback(({ editor }: { editor: Editor }) => {
+    const content = editor.getHTML();
+    
+    console.log('Editor content updated:', {
+      contentLength: content?.length || 0,
+      noteId,
+      content
+    });
+
+    // Only update localStorage and set current content on client-side
+    if (typeof window !== 'undefined' && noteId && content) {
+      // Save to local storage
+      localStorage.setItem(`editorContent-${noteId}`, content);
+      
+      // Set current content for debouncing
+      const sanitizedContent = sanitizeContent(content);
+      if (sanitizedContent) {
+        setCurrentContent(sanitizedContent);
+      }
+    }
+  }, [noteId, sanitizeContent]);
 
   const editor = useEditor({
     extensions: extensions || editorExtensions,
@@ -321,23 +445,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
         });
       });
     },
-    onUpdate: ({ editor }) => {
-      const content = editor.getHTML();
-      
-      console.log('Editor content updated:', {
-        contentLength: content.length,
-        noteId
-      });
-
-      // Only update localStorage and attempt save on client-side
-      if (typeof window !== 'undefined' && noteId) {
-        // Save to local storage
-        localStorage.setItem(`editorContent-${noteId}`, content);
-        
-        // Automatically save to database
-        autoSaveContent(content);
-      }
-    },
+    onUpdate: onEditorUpdate,
     immediatelyRender: false, // Add this line to resolve SSR hydration warning
     editorProps: {
       attributes: {
