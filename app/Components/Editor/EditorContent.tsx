@@ -226,6 +226,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
   
   // Use state for title with initial value
   const [title, setTitle] = useState("Untitled Page");
+  const [previousTitle, setPreviousTitle] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showCommandList, setShowCommandList] = useState(false);
   const [commandInput, setCommandInput] = useState("");
@@ -244,7 +245,27 @@ const EditorContent: React.FC<EditorContentProps> = ({
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+
+    // Fetch initial title when component mounts
+    const fetchTitle = async () => {
+      if (!noteId) return;
+
+      try {
+        const response = await fetch(`/api/notes?noteId=${noteId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.title) {
+            setTitle(data.title);
+            setPreviousTitle(data.title);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching title:', error);
+      }
+    };
+
+    fetchTitle();
+  }, [noteId]);
 
   // State to track saving status
   const [isSaving, setIsSaving] = useState(false);
@@ -700,10 +721,28 @@ const EditorContent: React.FC<EditorContentProps> = ({
     setIsEditing(true);
   };
 
-  const handleTitleBlur = () => {
+  const handleTitleBlur = async () => {
     setIsEditing(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("editorTitle", title);
+    
+    // Only update if title has changed
+    if (title !== previousTitle && noteId) {
+      try {
+        const response = await fetch(`/api/notes?noteId=${noteId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title }),
+        });
+
+        if (response.ok) {
+          setPreviousTitle(title);
+        } else {
+          console.error('Failed to update title');
+        }
+      } catch (error) {
+        console.error('Error updating title:', error);
+      }
     }
   };
 
@@ -711,11 +750,29 @@ const EditorContent: React.FC<EditorContentProps> = ({
     setTitle(e.target.value);
   };
 
-  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleTitleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       setIsEditing(false);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("editorTitle", title);
+      
+      // Only update if title has changed
+      if (title !== previousTitle && noteId) {
+        try {
+          const response = await fetch(`/api/notes?noteId=${noteId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title }),
+          });
+
+          if (response.ok) {
+            setPreviousTitle(title);
+          } else {
+            console.error('Failed to update title');
+          }
+        } catch (error) {
+          console.error('Error updating title:', error);
+        }
       }
     }
   };
