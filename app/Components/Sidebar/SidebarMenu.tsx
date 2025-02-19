@@ -5,6 +5,8 @@ import { CalendarIcon, ChevronLeft, ChevronRight, Home, PanelLeft, Search, Stick
 import { SidebarCalendar } from "./SidebarCalendar"
 import { useSidebar } from "./SidebarContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { createNewNote } from '@/app/utils/createNote'
+import { useRouter } from 'next/navigation'
 
 const navItems = [
     {
@@ -42,6 +44,7 @@ export const Sidebar = ({
 }: { 
     onSearchClick: () => void 
 }) => {
+    const router = useRouter()
     const { isOpen, toggleSidebar } = useSidebar()
     const [isCalendarOpen, setIsCalendarOpen] = React.useState(false)
     const [shouldResetCalendar, setShouldResetCalendar] = React.useState(false)
@@ -63,6 +66,15 @@ export const Sidebar = ({
             return () => clearTimeout(timer)
         }
     }, [shouldResetCalendar])
+
+    const handleCreateNote = async () => {
+      try {
+        const newNote = await createNewNote();
+        router.push(`/notes/${newNote.slug}`); // Redirect to the new note
+      } catch (error) {
+        console.error('Failed to create note:', error);
+      }
+    };
 
     return (
       <div className="flex h-screen">
@@ -92,7 +104,7 @@ export const Sidebar = ({
                     className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
                   />
                 </button>
-                <button className="p-1">
+                <button onClick={handleCreateNote} className="p-1">
                   <CirclePlus
                     strokeWidth={2}
                     className="h-[1.1rem] w-[1.1rem] text-[#91918e]"

@@ -33,7 +33,7 @@ const EditorComponent: React.FC<EditorProps> = ({
   const lastSelectionRef = React.useRef<{from: number, to: number} | null>(null);
 
   // Hardcoded test noteId for development
-  const TEST_NOTE_ID = 'test-note-001';
+  const TEST_NOTE_ID = '1';
 
   React.useEffect(() => {
     setIsClient(true);

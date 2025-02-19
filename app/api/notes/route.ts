@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { nanoid } from 'nanoid';
+
 const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
@@ -12,7 +14,7 @@ export async function GET(request: Request) {
     }
 
     const note = await prisma.note.findUnique({
-      where: { id: noteId },
+      where: { id: parseInt(noteId!) },
       select: { title: true }
     });
 
@@ -42,7 +44,7 @@ export async function PUT(request: Request) {
     }
 
     const updatedNote = await prisma.note.update({
-      where: { id: noteId },
+      where: { id: parseInt(noteId!) },
       data: { title },
       select: { title: true }
     });
@@ -50,6 +52,40 @@ export async function PUT(request: Request) {
     return NextResponse.json(updatedNote);
   } catch (error) {
     console.error('Error updating note title:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function POST() {
+  try {
+    const slug = nanoid(10); // Creates a unique 10-character slug
+    
+    const newNote = await prisma.note.create({
+      data: {
+        user: {
+          connect: {
+            id: 'default-user-id' // Replace with actual user ID from auth
+          }
+        },
+        workspace: {
+          connect: {
+            id: 'default-workspace-id' // Replace with actual workspace ID
+          }
+        },
+        title: 'New Pad',
+        slug,
+        content: ''
+      },
+      select: {
+        id: true,
+        slug: true,
+        title: true
+      }
+    });
+
+    return NextResponse.json(newNote);
+  } catch (error) {
+    console.error('Error creating note:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

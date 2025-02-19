@@ -30,9 +30,9 @@ CREATE TABLE "Workspace" (
 
 -- CreateTable
 CREATE TABLE "Note" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "slug" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
     "content" TEXT,
     "userId" TEXT NOT NULL,
     "workspaceId" TEXT NOT NULL,
@@ -46,11 +46,12 @@ CREATE TABLE "Note" (
 -- CreateTable
 CREATE TABLE "Block" (
     "id" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
-    "noteId" TEXT NOT NULL,
+    "content" JSONB NOT NULL,
+    "slug" TEXT,
+    "noteId" INTEGER NOT NULL,
     "type" TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
+    "metadata" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -79,7 +80,7 @@ CREATE TABLE "CalendarEvent" (
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
     "calendarIntegrationId" TEXT NOT NULL,
-    "noteId" TEXT,
+    "noteId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -93,7 +94,7 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "Note_slug_key" ON "Note"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Block_noteId_slug_key" ON "Block"("noteId", "slug");
+CREATE UNIQUE INDEX "block_unique_constraint" ON "Block"("noteId", "slug");
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

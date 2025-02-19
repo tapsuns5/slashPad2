@@ -176,23 +176,25 @@ export async function POST(request: NextRequest) {
 }
 
 // Optional: Add a GET method to retrieve blocks for a specific note
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    // Extract noteId from query parameters
     const { searchParams } = new URL(request.url);
-    const noteId = searchParams.get('noteId');
+    const noteId = parseInt(searchParams.get('noteId') || '');
 
-    if (!noteId) {
+    if (isNaN(noteId)) {
       return NextResponse.json(
-        { error: 'Note ID is required' }, 
+        { error: 'Invalid noteId parameter' },
         { status: 400 }
       );
     }
 
-    // Retrieve blocks for the specified note
     const blocks = await prisma.block.findMany({
-      where: { noteId },
-      orderBy: { createdAt: 'asc' }
+      where: {
+        noteId: noteId // Now passing as number
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
     });
 
     return NextResponse.json(blocks, { status: 200 });
@@ -210,52 +212,38 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    // Use request.json() for direct JSON parsing
     const payload = await request.json();
-
     console.log('Block Update Payload:', JSON.stringify(payload, null, 2));
 
-    // Validate core payload structure
-    if (!payload.content || !payload.noteId || !payload.slug) {
-      console.error('Missing required payload fields', {
-        hasContent: !!payload.content,
-        hasNoteId: !!payload.noteId,
-        hasSlug: !!payload.slug,
-        payloadKeys: Object.keys(payload)
-      });
+    // Convert noteId to integer
+    const noteId = parseInt(payload.noteId);
+    if (isNaN(noteId)) {
       return NextResponse.json(
-        { 
-          error: 'Invalid payload structure', 
-          details: {
-            missingContent: !payload.content,
-            missingNoteId: !payload.noteId,
-            missingSlug: !payload.slug
-          }
-        }, 
+        { error: 'Invalid noteId format' },
         { status: 400 }
       );
     }
 
-    // Validate note existence
+    // Validate note existence with converted integer ID
     const note = await prisma.note.findUnique({
-      where: { id: payload.noteId }
+      where: { id: noteId }
     });
 
     if (!note) {
-      console.error(`Note with ID ${payload.noteId} not found`);
+      console.error(`Note with ID ${noteId} not found`);
       return NextResponse.json(
-        { error: `Note with ID ${payload.noteId} not found` }, 
+        { error: `Note with ID ${noteId} not found` }, 
         { status: 404 }
       );
     }
 
-    // Find the existing block using only noteId
+    // Update the block creation/update logic to use the integer noteId
     const existingBlock = await prisma.block.findFirst({
       where: { 
-        noteId: payload.noteId
+        noteId: noteId  // Use the converted integer
       },
       orderBy: {
-        createdAt: 'desc' // Get the most recently created block for the note
+        createdAt: 'desc'
       }
     });
 
