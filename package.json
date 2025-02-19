@@ -13,11 +13,11 @@
     "prisma:prod": "dotenv -e .env.production prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "prisma:seed": "dotenv -e .env.local -- node --loader ts-node/esm prisma/seed.ts",
-    "prisma:migrate:dev": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_dev?schema=public prisma migrate dev",
-    "prisma:migrate:staging": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_staging?schema=public prisma migrate dev",
-    "prisma:migrate:prod": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_prod?schema=public prisma migrate dev",
-    "prisma:reset:dev": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_dev?schema=public prisma migrate reset --force",
-    "prisma:reset:dev:noseed": "DATABASE_URL=postgresql://tylerpalmer:Primero5@localhost:5432/slashpad_dev?schema=public prisma migrate reset --force --skip-seed"
+    "prisma:migrate:dev": "dotenv -e .env.development prisma migrate dev",
+    "prisma:migrate:staging": "dotenv -e .env.staging prisma migrate dev",
+    "prisma:migrate:prod": "dotenv -e .env.production prisma migrate dev",
+    "prisma:reset:dev": "dotenv -e .env.development prisma migrate reset --force",
+    "prisma:reset:dev:noseed": "dotenv -e .env.development prisma migrate reset --force --skip-seed"
   },
   "prisma": {
     "seed": "dotenv -e .env.local -- node --loader ts-node/esm prisma/seed.ts"
