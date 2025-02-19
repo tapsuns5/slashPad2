@@ -84,15 +84,6 @@ const PageContent = () => {
                   />
                   </div>
                 </ScrollArea>
-                <div className="absolute bottom-4 right-4">
-                  <Button
-                    variant="outline"
-                    className="border-border"
-                    id="save-button"
-                  >
-                    Save
-                  </Button>
-                </div>
               </div>
 
               {/* Search Overlay */}

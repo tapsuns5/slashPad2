@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CalendarIcon, ChevronLeft, ChevronRight, Home, PanelLeft, Search, StickyNote, } from "lucide-react"
-
+import { CalendarIcon, ChevronLeft, ChevronRight, Home, PanelLeft, Search, StickyNote, CirclePlus } from "lucide-react"
 import { SidebarCalendar } from "./SidebarCalendar"
 import { useSidebar } from "./SidebarContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -75,7 +74,7 @@ export const Sidebar = ({
           <div className="sticky top-0 z-10 border-b bg-[#f8f8f7]">
             <div className="flex items-center justify-between p-2">
               <Select>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[180px] border-0 shadow-none focus:ring-0 hover:bg-transparent">
                   <SelectValue placeholder="Select workspace" />
                 </SelectTrigger>
                 <SelectContent>
@@ -86,12 +85,20 @@ export const Sidebar = ({
                   ))}
                 </SelectContent>
               </Select>
-              <button onClick={toggleSidebar} className="p-2">
-                <PanelLeft
-                  strokeWidth={1.5}
-                  className="h-[1.1rem] w-[1.1rem] text-[#000000]"
-                />
-              </button>
+              <div className="flex items-center gap-1">
+                <button onClick={toggleSidebar} className="p-2 ml-2">
+                  <PanelLeft
+                    strokeWidth={2}
+                    className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
+                  />
+                </button>
+                <button className="p-1">
+                  <CirclePlus
+                    strokeWidth={2}
+                    className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
+                  />
+                </button>
+              </div>
             </div>
             <nav className="space-y-0.5 p-2">
               {navItems.map((item) => (

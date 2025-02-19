@@ -30,6 +30,7 @@ const EditorComponent: React.FC<EditorProps> = ({
   const [isClient, setIsClient] = React.useState(false);
   const [editorInstance, setEditorInstance] = React.useState<Editor | null>(null);
   const dragHandleRef = React.useRef<HTMLDivElement>(null);
+  const lastSelectionRef = React.useRef<{from: number, to: number} | null>(null);
 
   // Hardcoded test noteId for development
   const TEST_NOTE_ID = 'test-note-001';
@@ -37,6 +38,22 @@ const EditorComponent: React.FC<EditorProps> = ({
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+
+  React.useEffect(() => {
+    if (editorInstance) {
+      if (isSidebarOpen) {
+        // Save selection when sidebar opens
+        const { from, to } = editorInstance.state.selection;
+        lastSelectionRef.current = { from, to };
+      } else if (lastSelectionRef.current) {
+        // Restore selection when sidebar closes
+        requestAnimationFrame(() => {
+          editorInstance.commands.setTextSelection(lastSelectionRef.current!);
+          lastSelectionRef.current = null;
+        });
+      }
+    }
+  }, [isSidebarOpen, editorInstance]);
 
   // Only render on client
   if (!isClient) {
