@@ -56,30 +56,67 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const slug = nanoid(10); // Creates a unique 10-character slug
+    const slug = nanoid(10);
+    const body = await request.json().catch(() => ({}));
     
+    // Create the note first
     const newNote = await prisma.note.create({
       data: {
         user: {
           connect: {
-            id: 'default-user-id' // Replace with actual user ID from auth
+            id: body.userId || 'cm7bbipbl0001cb5so38cbeid'
           }
         },
         workspace: {
           connect: {
-            id: 'default-workspace-id' // Replace with actual workspace ID
+            id: body.workspaceId || 'cm7bbipbl0000cb5sbgzb1hx2'
           }
         },
-        title: 'New Pad',
+        title: body.title || 'New Pad',
         slug,
-        content: ''
+        content: body.content || ''
       },
       select: {
         id: true,
         slug: true,
         title: true
+      }
+    });
+
+    // Create the initial block for the note
+    const blockPayload = {
+      content: {
+        uid: nanoid(10),
+        text: '',
+        noteId: newNote.id
+      },
+      noteId: newNote.id,
+      metadata: {
+        contentType: 'text',
+        lastEditedAt: new Date().toISOString()
+      }
+    };
+
+    // Create the block
+    await prisma.block.create({
+      data: {
+        content: {
+          slug: nanoid(10),
+          noteId: newNote.id.toString(),
+          content: '',
+          metadata: {
+            contentType: 'text',
+            lastEditedAt: new Date().toISOString()
+          }
+        },
+        note: { connect: { id: newNote.id } },
+        type: 'text',
+        metadata: {
+          lastEditedAt: new Date().toISOString(),
+          contentType: 'text'
+        }
       }
     });
 

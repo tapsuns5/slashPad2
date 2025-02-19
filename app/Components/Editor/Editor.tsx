@@ -33,7 +33,7 @@ const EditorComponent: React.FC<EditorProps> = ({
   const lastSelectionRef = React.useRef<{from: number, to: number} | null>(null);
 
   // Hardcoded test noteId for development
-  const TEST_NOTE_ID = '1';
+  const TEST_NOTE_ID = 2;
 
   React.useEffect(() => {
     setIsClient(true);
@@ -73,7 +73,7 @@ const EditorComponent: React.FC<EditorProps> = ({
   return (
     <div className={`transition-all duration-300 ${isSidebarOpen ? "ml-0" : "ml-0"}`}>
       <EditorContent 
-        editorRef={handleEditorReady} 
+        editorRef={handleEditorReady}
         extensions={extensions}
         content={content}
         noteId={TEST_NOTE_ID} // Use the hardcoded test note ID

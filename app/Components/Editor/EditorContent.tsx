@@ -50,7 +50,7 @@ interface EditorContentProps {
   editorRef: ((editor: Editor) => void) | React.RefObject<Editor | null>;
   extensions?: Extension[];
   content?: string;
-  noteId?: string;
+  noteId?: number;
 }
 
 // Define precise types for block and content
@@ -203,7 +203,7 @@ const updateBlockContent = async (
 
 type BlockPayload = {
   content: string;
-  noteId: string;
+  noteId: number;
   slug: string;
   id?: string;
   metadata: {
@@ -312,7 +312,10 @@ const EditorContent: React.FC<EditorContentProps> = ({
       });
 
       // Attempt to save or update the block
-      const updatedBlock = await updateBlockContent(blockPayload);
+      const updatedBlock = await updateBlockContent({
+        ...blockPayload,
+        noteId: String(blockPayload.noteId)  // Convert number to string
+      });
 
       // Store the block ID in localStorage for future updates
       if (updatedBlock?.id) {
