@@ -58,12 +58,12 @@ const PageContent = () => {
               <header className="flex items-center h-[calc(100%-3rem)] bg-background border-b border-border">
                 {!isOpen && (
                   <div className="mb-8 ml-4 h-full flex items-center">
-                    <button onClick={toggleSidebar}>
+                    <Button onClick={toggleSidebar} variant="ghost">
                       <PanelRight
                         strokeWidth={1.5}
                         className="h-[1.1rem] w-[1.1rem] text-[#000000]"
                       />
-                    </button>
+                    </Button>
                   </div>
                 )}
               </header>
@@ -92,12 +92,13 @@ const PageContent = () => {
                   <div className="bg-white p-6 rounded-lg w-96">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-xl font-semibold">Search</h2>
-                      <button 
+                      <Button
                         onClick={() => setIsSearchOpen(false)}
+                        variant="ghost"
                         className="text-gray-500 hover:text-gray-700"
                       >
                         Close
-                      </button>
+                      </Button>
                     </div>
                     <input 
                       type="text" 

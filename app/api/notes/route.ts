@@ -85,20 +85,6 @@ export async function POST(request: Request) {
       }
     });
 
-    // Create the initial block for the note
-    const blockPayload = {
-      content: {
-        uid: nanoid(10),
-        text: '',
-        noteId: newNote.id
-      },
-      noteId: newNote.id,
-      metadata: {
-        contentType: 'text',
-        lastEditedAt: new Date().toISOString()
-      }
-    };
-
     // Create the block
     await prisma.block.create({
       data: {

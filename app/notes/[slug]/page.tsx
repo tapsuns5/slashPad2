@@ -16,13 +16,23 @@ const EditorComponent = dynamic(() => import("../../Components/Editor/Editor"), 
     loading: () => <div>Loading editor...</div>
 });
 
+// Add this interface near the top of the file, after the imports
+interface NoteData {
+    id: string;
+    slug: string;
+    content: string;
+    title?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
 const PageContent = () => {
     const params = useParams()
     const { isOpen, toggleSidebar } = useSidebar()
     const [isClient, setIsClient] = React.useState(false);
     const editorRef = React.useRef<TiptapReact.Editor | null>(null);
-    const [noteData, setNoteData] = React.useState<any>(null);
-
+    const [noteData, setNoteData] = React.useState<NoteData | null>(null);
+    
     React.useEffect(() => {
         setIsClient(true);
         if (params?.slug) {

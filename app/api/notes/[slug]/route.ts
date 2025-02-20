@@ -1,25 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  context: any
 ) {
+  const { slug } = context.params as { slug: string };
+
   try {
-    const resolvedSlug = await Promise.resolve(params.slug);
-    
     const note = await prisma.note.findUnique({
-      where: {
-        slug: resolvedSlug
-      },
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        slug: true
-      }
+      where: { slug },
     });
 
     if (!note) {
