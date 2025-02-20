@@ -5,6 +5,7 @@ import * as React from "react";
 import { Editor } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
 import DragHandle from '@tiptap-pro/extension-drag-handle-react'
+import { useParams } from 'next/navigation';
 
 // Dynamically import EditorContent with SSR disabled
 const EditorContent = dynamic(() => import("./EditorContent"), { 
@@ -30,30 +31,31 @@ const EditorComponent: React.FC<EditorProps> = ({
   const [isClient, setIsClient] = React.useState(false);
   const [editorInstance, setEditorInstance] = React.useState<Editor | null>(null);
   const dragHandleRef = React.useRef<HTMLDivElement>(null);
-  const lastSelectionRef = React.useRef<{from: number, to: number} | null>(null);
+  const params = useParams();
+  const [noteId, setNoteId] = React.useState<number | null>(null);
 
-  // Hardcoded test noteId for development
-  const TEST_NOTE_ID = 2;
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
 
   React.useEffect(() => {
-    if (editorInstance) {
-      if (isSidebarOpen) {
-        // Save selection when sidebar opens
-        const { from, to } = editorInstance.state.selection;
-        lastSelectionRef.current = { from, to };
-      } else if (lastSelectionRef.current) {
-        // Restore selection when sidebar closes
-        requestAnimationFrame(() => {
-          editorInstance.commands.setTextSelection(lastSelectionRef.current!);
-          lastSelectionRef.current = null;
-        });
+    const fetchNoteId = async () => {
+      if (params.slug) {
+        try {
+          const response = await fetch(`/api/notes/${params.slug}`);
+          const data = await response.json();
+          if (data.id) {
+            setNoteId(data.id);
+          }
+        } catch (error) {
+          console.error('Error fetching note:', error);
+        }
       }
-    }
-  }, [isSidebarOpen, editorInstance]);
+    };
+
+    fetchNoteId();
+  }, [params.slug]);
 
   // Only render on client
   if (!isClient) {
@@ -76,7 +78,7 @@ const EditorComponent: React.FC<EditorProps> = ({
         editorRef={handleEditorReady}
         extensions={extensions}
         content={content}
-        noteId={TEST_NOTE_ID} // Use the hardcoded test note ID
+        noteId={noteId || undefined}
       />
       {editorInstance && (
         <DragHandle 

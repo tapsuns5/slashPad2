@@ -5,14 +5,11 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  context: any
+  context: { params: { slug: string } }
 ) {
-  const { slug } = context.params as { slug: string };
-
   try {
     const note = await prisma.note.findUnique({
-      where: { slug },
+      where: { slug: context.params.slug },
     });
 
     if (!note) {
