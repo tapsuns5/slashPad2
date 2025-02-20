@@ -7,6 +7,7 @@ import { useSidebar } from "./SidebarContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createNewNote } from '@/app/utils/createNote'
 import { useRouter } from 'next/navigation'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const navItems = [
     {
@@ -105,10 +106,19 @@ export const Sidebar = ({
                   />
                 </button>
                 <button onClick={handleCreateNote} className="p-1">
-                  <CirclePlus
-                    strokeWidth={2}
-                    className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
-                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CirclePlus
+                          strokeWidth={2}
+                          className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent className="TooltipContent">
+                        <p>Create new pad</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </button>
               </div>
             </div>
@@ -138,10 +148,19 @@ export const Sidebar = ({
                         className="h-6 w-4 text-[#91918e]"
                       />
                     ) : (
-                      <ChevronRight
-                        strokeWidth={2.2}
-                        className="h-6 w-4 text-[#91918e]"
-                      />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <ChevronRight
+                              strokeWidth={2.2}
+                              className="h-6 w-4 text-[#91918e]"
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Open menu</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ))}
                 </a>
               ))}
