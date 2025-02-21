@@ -100,13 +100,22 @@ export const Sidebar = ({
               </Select>
               <div className="flex items-center gap-1">
                 <button onClick={toggleSidebar} className="p-2 ml-2">
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                   <PanelLeft
                     strokeWidth={2}
                     className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
-                  />
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent className="TooltipContent">
+                        <p>Close menu</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </button>
                 <button onClick={handleCreateNote} className="p-1">
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={200}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <CirclePlus

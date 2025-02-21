@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../Components/Sidebar/SidebarMenu"
 import { SidebarProvider, useSidebar } from "../Components/Sidebar/SidebarContext"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Dynamically import EditorComponent with SSR disabled
 const EditorComponent = dynamic(() => import("../Components/Editor/Editor"), { 
@@ -58,12 +59,21 @@ const PageContent = () => {
               <header className="flex items-center h-[calc(100%-3rem)] bg-background border-b border-border">
                 {!isOpen && (
                   <div className="mb-8 ml-4 h-full flex items-center">
-                    <Button onClick={toggleSidebar} variant="ghost">
-                      <PanelRight
-                        strokeWidth={1.5}
-                        className="h-[1.1rem] w-[1.1rem] text-[#000000]"
-                      />
-                    </Button>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button onClick={toggleSidebar} variant="ghost">
+                            <PanelRight
+                              strokeWidth={2}
+                              className="h-[1.1rem] w-[1.1rem] text-[#91918e] scale-110"
+                            />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="TooltipContent">
+                          <p>Open sidebar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 )}
               </header>
