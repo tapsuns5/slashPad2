@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CalendarIcon, ChevronLeft, ChevronRight, Home, PanelLeft, Search, StickyNote, CirclePlus } from "lucide-react"
+import { CalendarIcon, ChevronLeft, ChevronRight, Home, PanelLeft, Search, StickyNote, CirclePlus, SquareCheck } from "lucide-react"
 import { SidebarCalendar } from "./SidebarCalendar"
 import { useSidebar } from "./SidebarContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -31,7 +31,12 @@ const navItems = [
         url: "#",
         chevronRight: ChevronRight,
         chevronLeft: ChevronLeft,
-    },
+  },
+  {
+        title: "Tasks",
+        icon: SquareCheck,
+        url: "#",
+  },
 ]
 
 const workspaces = [

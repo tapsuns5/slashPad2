@@ -115,3 +115,14 @@
 .TooltipContent[data-state="delayed-open"][data-side="left"] {
   animation-name: slideRightAndFade;
 }
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

@@ -5,11 +5,19 @@ import * as TiptapReact from "@tiptap/react"
 import dynamic from "next/dynamic"
 import { useEditor } from "@tiptap/react"
 import editorExtensions from "../../Components/Editor/EditorExtensions"
-import { PanelRight } from "lucide-react"
+import { PanelRight, Slash } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../../Components/Sidebar/SidebarMenu"
 import { SidebarProvider, useSidebar } from "../../Components/Sidebar/SidebarContext"
 import { useParams } from 'next/navigation'
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 const EditorComponent = dynamic(() => import("../../Components/Editor/Editor"), {
     ssr: false,
@@ -68,18 +76,35 @@ const PageContent = () => {
                 </div>
 
                 <div className="flex-1 flex flex-col overflow-auto">
-                    <div className="h-10 sticky top-0 bg-background pt-10 z-30">
-                        <header className="flex items-center h-[calc(100%-3rem)] bg-background border-b border-border">
+                    <div className="h-14 sticky top-0 bg-background pt-10 z-30">
+                        <header className="flex items-center h-[calc(100%-3rem)] bg-background border-b border-border px-6">
                             {!isOpen && (
                                 <div className="mb-8 ml-4 h-full flex items-center">
                                     <button onClick={toggleSidebar}>
                                         <PanelRight
-                                            strokeWidth={1.5}
-                                            className="h-[1.1rem] w-[1.1rem] text-[#000000]"
+                                            strokeWidth={2}
+                                            className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
                                         />
                                     </button>
                                 </div>
                             )}
+                            <div className="flex-1 px-8 mb-8">
+                                <Breadcrumb>
+                                    <BreadcrumbList>
+                                        <BreadcrumbItem>
+                                            <BreadcrumbLink className= "text-[#5f5e5b]" href="/notes">Notes</BreadcrumbLink>
+                                        </BreadcrumbItem>
+                                        <BreadcrumbSeparator>
+                                            <Slash className="h-4 w-4" />
+                                        </BreadcrumbSeparator>
+                                        <BreadcrumbItem>
+                                            <BreadcrumbPage>
+                                                {noteData?.title || 'Untitled'}
+                                            </BreadcrumbPage>
+                                        </BreadcrumbItem>
+                                    </BreadcrumbList>
+                                </Breadcrumb>
+                            </div>
                         </header>
                     </div>
 

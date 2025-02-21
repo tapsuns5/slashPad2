@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./Styles/globals.css";
+import "./globals.css";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FlyoutMenu } from "./Components/FlyoutMenu/FlyoutMenu";
 import { GrammarlyCleanup } from './utils/grammarlyCleaner'

@@ -13,6 +13,14 @@ export async function GET(
   try {
     const note = await prisma.note.findUnique({
       where: { slug },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!note) {
