@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Link2, Unlink } from "lucide-react"
 import { 
     addDays, 
     addMonths,
@@ -12,50 +12,30 @@ import {
     startOfMonth,
     startOfDay 
 } from "date-fns"
+import { useSession } from "next-auth/react"
+import { useParams } from "next/navigation"
+import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { CalendarService, CalendarEvent } from '../../services/calendarService'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
-type Event = {
-    id: number
-    title: string
-    time: string
-    location?: string
-    theme: "blue" | "pink" | "purple"
-    durationHours: number
-}
+// Update the Event type to match CalendarEvent
+type Event = CalendarEvent;
 
-const events: Event[] = [
-    {
-        id: 1,
-        title: "Breakfast",
-        time: "6:00 AM",
-        theme: "blue",
-        durationHours: 1,
-    },
-    {
-        id: 2,
-        title: "Flight to Paris",
-        time: "7:30 AM",
-        location: "John F. Kennedy International Airport",
-        theme: "pink",
-        durationHours: 3,
-    },
-    {
-        id: 3,
-        title: "Sightseeing",
-        time: "11:00 AM",
-        location: "Eiffel Tower",
-        theme: "blue",
-        durationHours: 2,
-    },
-]
-
+// Add this before the SidebarCalendar component
 const timeSlots = Array.from({ length: 24 }, (_, i) => {
     const hour = i
     return `${hour === 0 ? 12 : hour > 12 ? hour - 12 : hour}${hour < 12 ? "AM" : "PM"}`
 })
 
+// Add this before the SidebarCalendar component
 function getEventStyle(theme: Event["theme"]) {
     switch (theme) {
         case "blue":
@@ -82,11 +62,102 @@ function getEventStyle(theme: Event["theme"]) {
 }
 
 const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
+    const { data: session } = useSession()
+    const params = useParams()
     const today = startOfDay(new Date())
     const [selectedDay, setSelectedDay] = React.useState(today)
     const [activeDay, setActiveDay] = React.useState(today)
     const [currentMonth, setCurrentMonth] = React.useState(format(today, "MMM-yyyy"))
+    const [events, setEvents] = React.useState<Event[]>([])
     const firstDayCurrentMonth = startOfMonth(new Date(currentMonth))
+
+    // Remove calendarService state and initialization
+    // Instead, fetch events directly from API
+    React.useEffect(() => {
+        const fetchEvents = async () => {
+            if (session?.user) {
+                const startOfDay = new Date(selectedDay);
+                startOfDay.setHours(0, 0, 0, 0);
+                
+                const endOfDay = new Date(selectedDay);
+                endOfDay.setHours(23, 59, 59, 999);
+
+                try {
+                    const response = await fetch(`/api/calendar/events?timeMin=${startOfDay.toISOString()}&timeMax=${endOfDay.toISOString()}`);
+                    if (!response.ok) throw new Error('Failed to fetch events');
+                    const fetchedEvents = await response.json();
+                    setEvents(fetchedEvents);
+                } catch (error) {
+                    console.error('Failed to fetch events:', error);
+                    toast.error('Failed to load calendar events');
+                }
+            }
+        };
+
+        fetchEvents();
+    }, [selectedDay, session]);
+
+    // Add event linking handlers
+    // Updated link/unlink handlers
+    const handleLinkNote = async (eventId: string) => {
+        if (!params.slug) return;
+        
+        try {
+            const response = await fetch('/api/calendar/link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ noteId: Number(params.slug), eventId }),
+            });
+            
+            if (!response.ok) throw new Error('Failed to link note');
+            
+            toast.success("Note linked to event");
+            // Refresh events
+            const startOfDay = new Date(selectedDay);
+            const endOfDay = new Date(selectedDay);
+            endOfDay.setHours(23, 59, 59, 999);
+            
+            const eventsResponse = await fetch(`/api/calendar/events?timeMin=${startOfDay.toISOString()}&timeMax=${endOfDay.toISOString()}`);
+            if (eventsResponse.ok) {
+                const updatedEvents = await eventsResponse.json();
+                setEvents(updatedEvents);
+            }
+        } catch (error) {
+            console.error('Failed to link note:', error);
+            toast.error("Failed to link note to event");
+        }
+    };
+
+    const handleUnlinkNote = async (eventId: string) => {
+        try {
+            const response = await fetch(`/api/calendar/unlink`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ eventId }),
+            });
+            
+            if (!response.ok) throw new Error('Failed to unlink note');
+            
+            toast.success("Note unlinked from event");
+            // Refresh events
+            const startOfDay = new Date(selectedDay);
+            const endOfDay = new Date(selectedDay);
+            endOfDay.setHours(23, 59, 59, 999);
+            
+            const eventsResponse = await fetch(`/api/calendar/events?timeMin=${startOfDay.toISOString()}&timeMax=${endOfDay.toISOString()}`);
+            if (eventsResponse.ok) {
+                const updatedEvents = await eventsResponse.json();
+                setEvents(updatedEvents);
+            }
+        } catch (error) {
+            console.error('Failed to unlink note:', error);
+            toast.error("Failed to unlink note from event");
+        }
+    };
 
     // Reset state when resetState prop is true
     React.useEffect(() => {
@@ -116,9 +187,9 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
     }
 
     return (
-        <div className="flex flex-col px-2 py-1 mt-3">
+        <div className="flex flex-col px-2 py-1">
             <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-foreground">{format(firstDayCurrentMonth, "MMMM yyyy")}</h2>
+                <h2 className="text-sm font-semibold text-foreground mt-3">{format(firstDayCurrentMonth, "MMMM yyyy")}</h2>
                 <div className="flex items-center space-x-1">
                     <Button variant="ghost" size="sm" onClick={() => {
                         const today = startOfDay(new Date())
@@ -186,13 +257,14 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
                             </div>
                         ))}
                     </div>
+                    // Update the events rendering section
                     <div className="ml-10 space-y-1">
                         {events.map((event) => {
                             const style = getEventStyle(event.theme)
                             return (
                                 <div
                                     key={event.id}
-                                    className={cn("rounded-md p-2", style.background)}
+                                    className={cn("rounded-md p-2 relative group", style.background)}
                                     style={{
                                         marginTop: `${event.time.includes("6:00") ? "0" : "0.75rem"}`,
                                         height: `${event.durationHours * 3}rem`,
@@ -203,6 +275,29 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
                                     {event.location && (
                                         <p className={cn("mt-0.5 text-[10px] leading-tight", style.text)}>{event.location}</p>
                                     )}
+                                    <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 w-6 p-0"
+                                                        onClick={() => event.noteId ? handleUnlinkNote(event.id) : handleLinkNote(event.id)}
+                                                    >
+                                                        {event.noteId ? (
+                                                            <Unlink className="h-3 w-3" />
+                                                        ) : (
+                                                            <Link2 className="h-3 w-3" />
+                                                        )}
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{event.noteId ? "Unlink note" : "Link to current note"}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
                                 </div>
                             )
                         })}

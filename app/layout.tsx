@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FlyoutMenu } from "./Components/FlyoutMenu/FlyoutMenu";
 import { GrammarlyCleanup } from './utils/grammarlyCleaner'
 import "./Styles/editorStyles.css";
+import Provider from './providers/SessionProvider'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,9 +32,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Provider>
         <GrammarlyCleanup>
           {children}
         </GrammarlyCleanup>
+        </Provider>
       </body>
     </html>
   );

@@ -116,21 +116,21 @@ model CalendarIntegration {
 
 // Calendar Event model
 model CalendarEvent {
-  id            String   @id @default(cuid())
-  externalId    String   // ID from Google or Microsoft calendar
-  title         String
-  description   String?
-  startTime     DateTime
-  endTime       DateTime
-  
-  // Relationships
-  calendarIntegrationId String
-  calendarIntegration   CalendarIntegration @relation(fields: [calendarIntegrationId], references: [id])
-  
-  // Optional note association
-  noteId        Int?     // Changed from String? to Int?
-  note          Note?    @relation(fields: [noteId], references: [id])
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+    id            String   @id @default(cuid())
+    externalId    String   
+    title         String
+    description   String?
+    startTime     DateTime
+    endTime       DateTime
+    
+    calendarIntegrationId String
+    calendarIntegration   CalendarIntegration @relation(fields: [calendarIntegrationId], references: [id])
+    
+    noteId        Int?     
+    note          Note?    @relation(fields: [noteId], references: [id])
+    
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    @@unique([externalId, calendarIntegrationId])
 }
