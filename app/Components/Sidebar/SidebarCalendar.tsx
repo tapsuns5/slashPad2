@@ -257,7 +257,6 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
                             </div>
                         ))}
                     </div>
-                    // Update the events rendering section
                     <div className="ml-10 space-y-1">
                         {events.map((event) => {
                             const style = getEventStyle(event.theme)
