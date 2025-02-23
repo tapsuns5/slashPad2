@@ -28,6 +28,7 @@ import TableRow from '@tiptap/extension-table-row';
 import Details from '@tiptap-pro/extension-details'
 import DetailsContent from '@tiptap-pro/extension-details-content'
 import DetailsSummary from '@tiptap-pro/extension-details-summary'
+import { PlaceholderNode } from './extensions/PlaceholderNode'
 
 
 const editorExtensions: AnyExtension[] = [
@@ -84,6 +85,7 @@ const editorExtensions: AnyExtension[] = [
   }),
   DetailsContent,
   DetailsSummary,
+  PlaceholderNode,
 ];
 
 export default editorExtensions;

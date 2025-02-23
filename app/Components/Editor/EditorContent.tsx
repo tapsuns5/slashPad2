@@ -693,7 +693,20 @@ const EditorContent: React.FC<EditorContentProps> = ({
           const filteredCommands = COMMANDS.filter(command =>
             command.label.toLowerCase().includes(commandInput.toLowerCase())
           );
-          if (filteredCommands.length > 0) {
+          if (filteredCommands.length > 0 && filteredCommands[0].type !== 'group') {
+            // Get the current selection
+            const { from } = editor.state.selection;
+            const text = editor.view.state.doc.textBetween(Math.max(0, from - 10), from);
+            const slashCommand = text.match(/\/\w*$/)?.[0];
+            
+            // Delete the slash command text if it exists
+            if (slashCommand) {
+              editor.chain().deleteRange({
+                from: from - slashCommand.length,
+                to: from
+              }).run();
+            }
+          
             executeCommand(filteredCommands[0], editor);
             setShowCommandList(false);
             setCommandInput("");

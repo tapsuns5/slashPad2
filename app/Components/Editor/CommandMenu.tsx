@@ -43,56 +43,75 @@ interface CommandMenuProps {
 export const executeCommand = (command: Command, editor: Editor) => {
   console.log("Executing command:", command);
   
-  // Comprehensive null and method checks
   if (!editor) {
     console.error("Editor not initialized");
     return;
   }
 
-  // Verify critical methods exist
   if (!editor.chain || typeof editor.chain !== 'function') {
     console.error("Editor chain method is not available");
     return;
   }
 
   try {
-    const chain = editor.chain().focus();
+    // Get the current selection
+    const { from } = editor.state.selection;
+    const chain = editor.chain();
+    
+    // Delete the slash command text
+    const text = editor.view.state.doc.textBetween(Math.max(0, from - 10), from);
+    const slashCommand = text.match(/\/\w*$/)?.[0];
+    
+    if (slashCommand) {
+      chain.deleteRange({
+        from: from - slashCommand.length,
+        to: from
+      });
+    }
 
     switch (command.id) {
       case "bullet":
-        chain.focus().toggleBulletList().run();
+        chain.liftListItem('listItem')
+          .wrapInList('bulletList')
+          .run();
         break;
       case "heading1":
-        chain.toggleHeading({ level: 1 }).run();
+        chain.setNode('heading', { level: 1 })
+          .createParagraphNear()
+          .run();
         break;
       case "heading2":
-        chain.toggleHeading({ level: 2 }).run();
+        chain.setNode('heading', { level: 2 })
+          .createParagraphNear()
+          .run();
         break;
       case "heading3":
-        chain.toggleHeading({ level: 3 }).run();
+        chain.setNode('heading', { level: 3 })
+          .createParagraphNear()
+          .run();
         break;
       case "code":
-        chain.toggleCodeBlock().run();
+        chain.setNode('codeBlock').run();
         break;
       case "task":
-        chain.toggleTaskList().run();
+        chain.wrapInList('taskList').run();
         break;
       case "ordered":
-        chain.toggleOrderedList().run();
+        chain.liftListItem('listItem')
+          .wrapInList('orderedList')
+          .run();
         break;
       case "blockquote":
-        chain.toggleBlockquote().run();
+        chain.setBlockquote().run();
         break;
       case "table":
-        chain.insertTable({ rows: 3, cols: 3 }).run();
+        chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
         break;
       case "details":
-        chain
-          .focus()
-          .clearNodes()
-          .unsetAllMarks()
-          .setDetails()
-          .run();
+        chain.setNode('details').run();
+        break;
+      case "paragraph":
+        chain.setParagraph().run();
         break;
       default:
         console.log("Unknown command:", command.id);

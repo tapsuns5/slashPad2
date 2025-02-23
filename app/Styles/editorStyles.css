@@ -111,6 +111,20 @@
     height: 0;
     pointer-events: none;
 }
+.ProseMirror .placeholder[data-placeholder]::before {
+    content: attr(data-placeholder);
+    color: #adb5bd;
+    pointer-events: none;
+    position: absolute;
+}
+.node-placeholder {
+    color: #adb5bd;
+    pointer-events: none;
+    user-select: none;
+    display: inline-block;
+    position: absolute;
+    opacity: 0.5;
+}
 
 .tiptap-editor {
     display: flex;
