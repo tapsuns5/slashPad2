@@ -128,7 +128,7 @@ const PageContent = () => {
 export default function Page() {
     return (
         <SidebarProvider>
-            <PageContent />
+        <PageContent />
         </SidebarProvider>
     )
 }

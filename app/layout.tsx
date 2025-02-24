@@ -6,6 +6,7 @@ import { FlyoutMenu } from "./Components/FlyoutMenu/FlyoutMenu";
 import { GrammarlyCleanup } from './utils/grammarlyCleaner'
 import "./Styles/editorStyles.css";
 import Provider from './providers/SessionProvider'
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Provider>
+          <Toaster />
         <GrammarlyCleanup>
           {children}
         </GrammarlyCleanup>

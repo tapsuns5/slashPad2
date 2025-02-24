@@ -721,12 +721,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
   );
 
   useEffect(() => {
-    //Initialize clipboard copy functionality
+    // Initialize clipboard copy functionality
     initializeClipboardCopy();
     
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
-
+  
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
