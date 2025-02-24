@@ -888,3 +888,11 @@ th {
 .TooltipContent[data-state="delayed-open"][data-side="left"] {
     animation-name: slideRightAndFade;
 }
+
+.blockquote {
+    @apply pl-4 border-l-4 border-primary italic my-4 text-muted-foreground;
+    border-left: 3px solid var(--muted-foreground);
+    margin: 1.5rem 0;
+    padding-left: 1rem;
+    color: var(--muted-foreground)
+}

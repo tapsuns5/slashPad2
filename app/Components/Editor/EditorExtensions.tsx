@@ -41,7 +41,11 @@ const editorExtensions: AnyExtension[] = [
   Paragraph,
   Text,
   HardBreak,
-  Blockquote,
+  Blockquote.configure({
+    HTMLAttributes: {
+      class: 'blockquote',
+    },
+  }),
   BulletList.configure({
     HTMLAttributes: {
       class: 'editor-bullet-list',

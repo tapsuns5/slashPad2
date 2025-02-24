@@ -102,7 +102,7 @@ export const executeCommand = (command: Command, editor: Editor) => {
           .run();
         break;
       case "blockquote":
-        chain.setBlockquote().run();
+        chain.setBlockquote().updateAttributes('blockquote', { class: 'blockquote' }).run();
         break;
       case "table":
         chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
