@@ -172,10 +172,31 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
 
   if (!isVisible) return null;
 
-  const filteredCommands = COMMANDS.filter((command) =>
-    command.label.toLowerCase().includes(filterValue.toLowerCase()) ||
-    (command.shortcut && command.shortcut.toLowerCase().includes(filterValue.toLowerCase()))
-  );
+  const filteredCommands = COMMANDS.reduce((acc, command) => {
+    if (command.type === 'group') {
+      // Don't add group headers immediately - they'll be added only if needed
+      return acc;
+    }
+
+    // Check if command matches filter
+    const matchesFilter = 
+      command.label.toLowerCase().includes(filterValue.toLowerCase()) ||
+      (command.shortcut && command.shortcut.toLowerCase().includes(filterValue.toLowerCase()));
+    
+    if (matchesFilter) {
+      // Find and add the associated group header if not already added
+      const previousGroup = COMMANDS.slice(0, COMMANDS.indexOf(command))
+        .reverse()
+        .find(cmd => cmd.type === 'group');
+      
+      if (previousGroup && !acc.some(cmd => cmd.id === previousGroup.id)) {
+        acc.push(previousGroup);
+      }
+      acc.push(command);
+    }
+    
+    return acc;
+  }, [] as Command[]);
 
   return (
     <div

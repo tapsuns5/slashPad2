@@ -690,9 +690,11 @@ const EditorContent: React.FC<EditorContentProps> = ({
           });
         } else if (event.key === "Enter") {
           event.preventDefault();
-          const filteredCommands = COMMANDS.filter(command =>
-            command.label.toLowerCase().includes(commandInput.toLowerCase())
-          );
+          const filteredCommands = COMMANDS
+            .filter(command => command.type !== 'group')
+            .filter(command =>
+              command.label.toLowerCase().includes(commandInput.toLowerCase())
+            );
           if (filteredCommands.length > 0 && filteredCommands[0].type !== 'group') {
             // Get the current selection
             const { from } = editor.state.selection;
