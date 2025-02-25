@@ -108,7 +108,7 @@ export const executeCommand = (command: Command, editor: Editor) => {
         chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
         break;
       case "details":
-        chain.setNode('details').run();
+        chain.setDetails().run();
         break;
       case "paragraph":
         chain.setParagraph().run();

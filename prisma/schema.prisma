@@ -24,23 +24,24 @@ enum CalendarProvider {
 
 // User model with authentication, workspace, and role management
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String   // Use hashing in application logic
-  role      UserRole @default(USER)
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  provider      String?
+  role          UserRole  @default(USER)
   
-  // Workspace isolation
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  // Make workspaceId optional during initial signup
+  workspaceId   String?
+  workspace     Workspace? @relation(fields: [workspaceId], references: [id])
   
   // Authentication and tracking
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   
   // Relationships
-  notes     Note[]
-  calendars CalendarIntegration[]
+  notes         Note[]
+  calendars     CalendarIntegration[]
 }
 
 // Workspace model for multi-tenant SAAS

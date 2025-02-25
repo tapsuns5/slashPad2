@@ -497,7 +497,9 @@
 }
 
 .drag-handle {
-    position: fixed;
+    position: flex;
+    top: 50%;
+    align-items: center;
     opacity: 10;
     transition: opacity ease-in 0.3s;
     border-radius: 0.25rem;
