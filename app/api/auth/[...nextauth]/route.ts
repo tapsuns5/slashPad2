@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth, { AuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
@@ -10,14 +10,20 @@ import { prisma } from "@/lib/prisma";
 interface ExtendedSession extends Session {
   accessToken?: string;
   user: {
+    id?: string;
     accessToken?: string;
     email?: string;
     name?: string;
     image?: string;
+    workspaceId?: string;
   }
 }
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -95,11 +101,11 @@ const handler = NextAuth({
     async signIn({ user, account, profile }) {
       try {
         if (account?.provider === "google" || account?.provider === "azure-ad") {
-          const existingUser = await prisma.user.findUnique({
+          let dbUser = await prisma.user.findUnique({
             where: { email: user.email! },
           });
 
-          if (!existingUser) {
+          if (!dbUser) {
             // Create a workspace for new OAuth users
             const workspace = await prisma.workspace.create({
               data: {
@@ -107,7 +113,7 @@ const handler = NextAuth({
               },
             });
 
-            await prisma.user.create({
+            dbUser = await prisma.user.create({
               data: {
                 email: user.email!,
                 name: user.name!,
@@ -117,6 +123,33 @@ const handler = NextAuth({
               },
             });
           }
+
+          // Add calendar integration using the database user ID
+          if (account.provider === "google" && account.access_token) {
+            await prisma.calendarIntegration.upsert({
+              where: {
+                userId_provider: {
+                  userId: dbUser.id,
+                  provider: "GOOGLE"
+                }
+              },
+              create: {
+                userId: dbUser.id,
+                provider: "GOOGLE",
+                accessToken: account.access_token,
+                refreshToken: account.refresh_token!,
+                expiresAt: new Date(Date.now() + (Number(account.expires_in) * 1000)),
+              },
+              update: {
+                accessToken: account.access_token,
+                refreshToken: account.refresh_token!,
+                expiresAt: new Date(Date.now() + (Number(account.expires_in) * 1000)),
+              }
+            });
+          }
+
+          // Set the correct database user ID in the token
+          user.id = dbUser.id;
         }
         return true;
       } catch (error) {
@@ -124,34 +157,40 @@ const handler = NextAuth({
         return false;
       }
     },
-    async jwt({ token, account, profile }) {
-      console.log('JWT Callback - Account:', account);
-      console.log('JWT Callback - Token:', token);
-      
-      if (account) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-        token.profile = profile;
-        token.provider = account.provider;
-      }
-      return token;
-    },
-    async session({ session, token, user }) {
-      console.log('Session Callback - Token:', token);
-      console.log('Session Callback - Initial Session:', session);
-      
+    async jwt({ token, account, profile, user }: { 
+          token: JWT; 
+          account: any | null; 
+          profile?: any; 
+          user?: any; 
+        }) {
+          if (user) {
+            token.id = user.id;
+            token.workspaceId = user.workspaceId;
+          }
+          if (account) {
+            token.accessToken = account.access_token;
+            token.refreshToken = account.refresh_token;
+            token.profile = profile;
+            token.provider = account.provider;
+          }
+          return token;
+        },
+    async session({ session, token }) {
       const extendedSession = session as ExtendedSession;
       extendedSession.accessToken = token.accessToken as string;
+      extendedSession.user.id = token.id as string;
       extendedSession.user.accessToken = token.accessToken as string;
+      extendedSession.user.workspaceId = token.workspaceId as string;
       
-      console.log('Session Callback - Extended Session:', extendedSession);
       return extendedSession;
     },
   },
   pages: {
     signIn: '/login',
+    newUser: '/setup/calendar',
   },
   debug: process.env.NODE_ENV === 'development',
-});
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

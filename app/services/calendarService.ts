@@ -23,7 +23,11 @@ export class CalendarService {
     private integrationId: string;
 
     constructor(userId: string, credentials: { access_token: string, integration_id: string }) {
-        this.auth = new google.auth.OAuth2();
+        this.auth = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.NEXTAUTH_URL + "/api/auth/callback/google"
+        );
         this.auth.setCredentials({
             access_token: credentials.access_token
         });
@@ -31,7 +35,47 @@ export class CalendarService {
         this.integrationId = credentials.integration_id;
     }
 
+    private async refreshTokenIfNeeded(integration: any) {
+        if (new Date(integration.expiresAt) <= new Date()) {
+            try {
+                const response = await this.auth.refreshAccessToken();
+                const tokens = response.credentials;
+                
+                await prisma.calendarIntegration.update({
+                    where: { id: integration.id },
+                    data: {
+                        accessToken: tokens.access_token!,
+                        expiresAt: new Date(Date.now() + (tokens.expiry_date || 3600) * 1000),
+                    },
+                });
+
+                return tokens.access_token;
+            } catch (error) {
+                console.error("Token refresh failed:", error);
+                throw error;
+            }
+        }
+        return integration.accessToken;
+    }
+
     async getEvents(timeMin: Date, timeMax: Date): Promise<CalendarEvent[]> {
+        let accessToken = this.auth.credentials.access_token;
+
+        // If no direct access token or integration_id isn't 'direct', try database
+        if (!accessToken || this.integrationId !== 'direct') {
+            const integration = await prisma.calendarIntegration.findFirst({
+                where: { userId: this.userId }
+            });
+
+            if (!integration) {
+                throw new Error("No calendar integration found");
+            }
+
+            accessToken = await this.refreshTokenIfNeeded(integration);
+        }
+
+        this.auth.setCredentials({ access_token: accessToken });
+
         const calendar = google.calendar({ version: 'v3', auth: this.auth });
         
         try {
@@ -45,12 +89,10 @@ export class CalendarService {
 
             if (!response.data.items) return [];
 
-            const events = await Promise.all(response.data.items.map(async (event) => {
+            // Directly map Google Calendar events to our interface without database sync
+            const events = response.data.items.map((event) => {
                 const startDateTime = event.start?.dateTime || event.start?.date || '';
                 const endDateTime = event.end?.dateTime || event.end?.date || '';
-
-                // Find or create the calendar event in the database
-                const dbEvent = await this.syncEventToDatabase(event);
                 
                 return {
                     id: event.id || '',
@@ -61,9 +103,9 @@ export class CalendarService {
                     durationHours: this.calculateDuration(startDateTime, endDateTime),
                     start: new Date(startDateTime),
                     end: new Date(endDateTime),
-                    noteId: dbEvent?.noteId || undefined
+                    noteId: undefined
                 };
-            }));
+            });
 
             return events;
         } catch (error) {

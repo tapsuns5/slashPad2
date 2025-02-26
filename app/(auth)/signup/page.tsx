@@ -34,7 +34,7 @@ export default function SignUpPage() {
         throw new Error(data.message || "Error creating account");
       }
 
-      // If signup successful, automatically sign in
+      // If signup successful, sign in
       const result = await signIn("credentials", {
         email,
         password,
@@ -44,7 +44,8 @@ export default function SignUpPage() {
       if (result?.error) {
         setError("Error signing in after signup");
       } else {
-        router.push("/dashboard");
+        // After successful signin, redirect to calendar setup
+        router.push("/setup/calendar");
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred during signup");
