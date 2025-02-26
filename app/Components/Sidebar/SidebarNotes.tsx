@@ -21,6 +21,7 @@ interface Note {
     createdAt: string
     updatedAt: string
     category?: string  // Make category optional since some notes might not have it
+    slug: string
 }
 
 const SidebarNotes = () => {
@@ -34,17 +35,24 @@ const SidebarNotes = () => {
     React.useEffect(() => {
         const fetchNotes = async () => {
             try {
-                const response = await fetch('/api/notes')
-                if (!response.ok) throw new Error('Failed to fetch notes')
-                const data = await response.json()
-                setNotes(data)
+                // Get the current user ID (you'll need to implement this based on your auth system)
+                const userId = 'cm7bbipbl0001cb5so38cbeid'; // Temporary hardcoded ID for testing
+                const response = await fetch(`/api/notes?userId=${userId}`);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to fetch notes');
+                }
+                
+                const data = await response.json();
+                setNotes(data);
             } catch (error) {
-                console.error('Failed to fetch notes:', error)
+                console.error('Failed to fetch notes:', error);
             }
-        }
+        };
 
-        fetchNotes()
-    }, [])
+        fetchNotes();
+    }, []);
 
     // Filter and sort notes
     // Update the filtering logic
@@ -121,7 +129,7 @@ const SidebarNotes = () => {
                     {filteredAndSortedNotes.map((note) => (
                         <button
                             key={note.id}
-                            onClick={() => router.push(`/notes/${note.id}`)}
+                            onClick={() => router.push(`/notes/${note.slug}`)}
                             className="w-full text-left p-3 rounded-lg border bg-card hover:bg-accent transition-colors"
                         >
                             <h3 className="font-medium line-clamp-1">{note.title}</h3>

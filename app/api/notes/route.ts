@@ -8,23 +8,43 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const noteId = searchParams.get('noteId');
+    const userId = searchParams.get('userId');
 
-    if (!noteId) {
-      return NextResponse.json({ error: 'Note ID is required' }, { status: 400 });
+    // If noteId is provided, return single note
+    if (noteId) {
+      const note = await prisma.note.findUnique({
+        where: { id: parseInt(noteId) },
+        select: { title: true }
+      });
+
+      if (!note) {
+        return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(note);
     }
 
-    const note = await prisma.note.findUnique({
-      where: { id: parseInt(noteId!) },
-      select: { title: true }
-    });
+    // If userId is provided, return all notes for that user
+    if (userId) {
+      const notes = await prisma.note.findMany({
+        where: { userId: userId },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          createdAt: true,
+          updatedAt: true,
+          slug: true  // Replace category with existing fields
+        },
+        orderBy: { createdAt: 'desc' }
+      });
 
-    if (!note) {
-      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+      return NextResponse.json(notes);
     }
 
-    return NextResponse.json(note);
+    return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   } catch (error) {
-    console.error('Error fetching note title:', error);
+    console.error('Error fetching notes:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -61,17 +81,34 @@ export async function POST(request: Request) {
     const slug = nanoid(10);
     const body = await request.json().catch(() => ({}));
     
+    // Get the current user
+    const user = await prisma.user.findUnique({
+      where: { id: body.userId },
+      select: {
+        id: true,
+        workspaceId: true
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (!user.workspaceId) {
+      return NextResponse.json({ error: 'No workspace found for user' }, { status: 404 });
+    }
+
     // Create the note first
     const newNote = await prisma.note.create({
       data: {
         user: {
           connect: {
-            id: body.userId || 'cm7bbipbl0001cb5so38cbeid'
+            id: user.id
           }
         },
         workspace: {
           connect: {
-            id: body.workspaceId || 'cm7bbipbl0000cb5sbgzb1hx2'
+            id: user.workspaceId
           }
         },
         title: body.title || 'New Pad',
