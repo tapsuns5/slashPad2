@@ -22,40 +22,82 @@ export class CalendarService {
     private userId: string;
     private integrationId: string;
 
-    constructor(userId: string, credentials: { access_token: string, integration_id: string }) {
+    constructor(userId: string, credentials: { 
+        access_token: string, 
+        refresh_token: string,
+        integration_id: string 
+    }) {
         this.auth = new google.auth.OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
+            process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,  // Changed to match env variable
             process.env.GOOGLE_CLIENT_SECRET,
-            process.env.NEXTAUTH_URL + "/api/auth/callback/google"
+            process.env.NEXTAUTH_URL
         );
+        // Set both tokens immediately
         this.auth.setCredentials({
-            access_token: credentials.access_token
+            access_token: credentials.access_token,
+            refresh_token: credentials.refresh_token,
+            expiry_date: Date.now() + 3600 * 1000 // Set expiry 1 hour from now
         });
         this.userId = userId;
         this.integrationId = credentials.integration_id;
     }
 
     private async refreshTokenIfNeeded(integration: any) {
-        if (new Date(integration.expiresAt) <= new Date()) {
-            try {
-                const response = await this.auth.refreshAccessToken();
-                const tokens = response.credentials;
-                
-                await prisma.calendarIntegration.update({
-                    where: { id: integration.id },
-                    data: {
-                        accessToken: tokens.access_token!,
-                        expiresAt: new Date(Date.now() + (tokens.expiry_date || 3600) * 1000),
-                    },
-                });
+        try {
+            // Get a fresh copy of the integration from the database
+            const freshIntegration = await prisma.calendarIntegration.findUnique({
+                where: { id: integration.id }
+            });
 
-                return tokens.access_token;
-            } catch (error) {
-                console.error("Token refresh failed:", error);
-                throw error;
+            if (!freshIntegration?.refreshToken) {
+                throw new Error('No refresh token available');
             }
+
+            // Create a new OAuth2 client for token refresh
+            const oauth2Client = new google.auth.OAuth2(
+                process.env.GOOGLE_CLIENT_ID,  // Use server-side client ID
+                process.env.GOOGLE_CLIENT_SECRET,
+                `${process.env.NEXTAUTH_URL}/api/auth/callback/google`
+            );
+
+            // Set refresh token and try to refresh
+            oauth2Client.setCredentials({
+                refresh_token: freshIntegration.refreshToken
+            });
+
+            const response = await oauth2Client.refreshAccessToken();
+            const tokens = response.credentials;
+            
+            if (!tokens?.access_token) {
+                throw new Error('Failed to get new access token');
+            }
+
+            // Update the database with new tokens
+            await prisma.calendarIntegration.update({
+                where: { id: integration.id },
+                data: {
+                    accessToken: tokens.access_token,
+                    expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : new Date(Date.now() + 3600 * 1000),
+                },
+            });
+
+            // Update the OAuth client with new credentials
+            this.auth.setCredentials({
+                access_token: tokens.access_token,
+                refresh_token: freshIntegration.refreshToken,
+                expiry_date: tokens.expiry_date
+            });
+            
+            return tokens.access_token;
+        } catch (error: any) {
+            console.error("Token refresh failed:", {
+                message: error?.message,
+                code: error?.code,
+                status: error?.response?.status,
+                details: error?.response?.data
+            });
+            throw error;
         }
-        return integration.accessToken;
     }
 
     async getEvents(timeMin: Date, timeMax: Date): Promise<CalendarEvent[]> {

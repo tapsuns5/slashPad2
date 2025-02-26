@@ -17,12 +17,27 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const timeMin = searchParams.get('timeMin');
     const timeMax = searchParams.get('timeMax');
-    console.log('Search params:', searchParams.toString());
 
-    // Use session access token directly
-    const calendarService = new CalendarService(session.user.id, {
-        access_token: session.user.accessToken,
-        integration_id: 'direct' // This won't be used since we're bypassing DB checks
+    // Get the calendar integration to use refresh token
+    const integration = await prisma.calendarIntegration.findFirst({
+        where: {
+            user: {
+                email: session.user.email
+            }
+        },
+        include: {
+            user: true
+        }
+    });
+
+    if (!integration) {
+        return NextResponse.json({ error: 'No calendar integration found' }, { status: 404 });
+    }
+
+    const calendarService = new CalendarService(integration.userId, {
+        access_token: integration.accessToken,
+        refresh_token: integration.refreshToken,
+        integration_id: integration.id
     });
 
     try {
