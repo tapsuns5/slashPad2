@@ -4,11 +4,11 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: NextRequest,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  context: any
+  request: Request,
+  context: { params: { slug: string } }
 ) {
-  const { slug } = context.params as { slug: string };
+  const { slug } = context.params;
 
   try {
     const note = await prisma.note.findUnique({
