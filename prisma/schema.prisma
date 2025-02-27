@@ -42,6 +42,7 @@ model User {
   // Relationships
   notes         Note[]
   calendars     CalendarIntegration[]
+  tags          Tag[]    // Add this line to complete the relation
 }
 
 // Workspace model for multi-tenant SAAS
@@ -73,6 +74,9 @@ model Note {
   
   // Calendar event associations
   calendarEvents CalendarEvent[]
+  
+  // Add tags relation
+  tags      NoteTags[]
   
   // Metadata
   isPublic    Boolean  @default(false)
@@ -138,3 +142,26 @@ model CalendarEvent {
   @@unique([externalId, calendarIntegrationId])
   @@index([recurringEventId])
 }
+// Add these models to your schema
+
+model Tag {
+    id        String   @id @default(cuid())
+    name      String
+    userId    String
+    createdAt DateTime @default(now())
+    notes     NoteTags[]
+    user      User     @relation(fields: [userId], references: [id])
+
+    @@unique([name, userId])
+}
+
+model NoteTags {
+    noteId    Int
+    tagId     String
+    note      Note     @relation(fields: [noteId], references: [id])
+    tag       Tag      @relation(fields: [tagId], references: [id])
+
+    @@id([noteId, tagId])
+}
+
+// Remove the duplicate Note model definition at the end
