@@ -234,6 +234,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
   const [commandInput, setCommandInput] = useState("");
   // const [commands, setCommands] = useState<Command[]>(COMMANDS);
   // const [dragHandle, setDragHandle] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
   
   // Format current date
   const formattedDate = new Date().toLocaleDateString('en-US', {
@@ -253,13 +254,25 @@ const EditorContent: React.FC<EditorContentProps> = ({
       if (!noteId) return;
 
       try {
-        const response = await fetch(`/api/notes?noteId=${noteId}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.title) {
-            setTitle(data.title);
-            setPreviousTitle(data.title);
+        // First get the note's slug
+        const noteResponse = await fetch(`/api/notes?noteId=${noteId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           }
+        });
+
+        if (!noteResponse.ok) {
+          throw new Error('Failed to fetch note');
+        }
+
+        const notes = await noteResponse.json();
+        // Find the specific note we want
+        const note = Array.isArray(notes) ? notes.find(n => n.id === noteId) : null;
+        
+        if (note && note.title) {
+          setTitle(note.title);
+          setPreviousTitle(note.title);
         }
       } catch (error) {
         console.error('Error fetching title:', error);
@@ -576,8 +589,65 @@ const EditorContent: React.FC<EditorContentProps> = ({
   const [initialContent, setInitialContent] = useState<string | null>(null);
 
   // ... other state declarations ...
-  const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+
+  // Add this function inside the component
+  // Update the handleCreateTag function to be more robust
+  const handleCreateTag = async (tagName: string) => {
+    if (!noteId || !tagName.trim()) return;
+    
+    try {
+      const trimmedName = tagName.trim();
+      console.log('Creating tag:', trimmedName);
+      
+      const tagResponse = await fetch('/api/tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: trimmedName
+          // userId will be handled by the API route using the session
+        })
+      });
+  
+      if (!tagResponse.ok) {
+        const errorData = await tagResponse.text();
+        console.error('Tag creation failed:', errorData);
+        throw new Error(`Failed to create tag: ${errorData}`);
+      }
+  
+      const tag = await tagResponse.json();
+      console.log('Tag created successfully:', tag);
+  
+      // Only proceed with linking if we have a valid tag ID
+      if (tag && tag.id) {
+        const linkResponse = await fetch('/api/note-tags', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            noteId: noteId,
+            tagId: tag.id 
+          })
+        });
+  
+        if (!linkResponse.ok) {
+          const linkErrorData = await linkResponse.text();
+          console.error('Tag linking failed:', linkErrorData);
+          throw new Error(`Failed to link tag: ${linkErrorData}`);
+        }
+  
+        setTags(prevTags => [...prevTags, trimmedName]);
+        setTagInput('');
+      }
+    } catch (error) {
+      console.error('Detailed error creating tag:', error);
+      // Don't throw the error, just log it
+      setTagInput(''); // Clear input even if there's an error
+    }
+  };
 
   useEffect(() => {
     const fetchBlockContent = async () => {
@@ -741,6 +811,63 @@ const EditorContent: React.FC<EditorContentProps> = ({
     };
   }, [handleClickOutside, handleKeyDown]);
 
+  // Add this effect after other useEffects
+  useEffect(() => {
+    const fetchNoteTags = async () => {
+      if (!noteId) {
+        console.log('No noteId provided for fetching tags');
+        return;
+      }
+
+      console.log('Fetching tags for noteId:', noteId);
+      try {
+        const response = await fetch(`/api/note-tags?noteId=${noteId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch tags: ${response.status}`);
+        }
+
+        const rawResponse = await response.text(); // First get raw response
+        console.log('Raw tags response:', rawResponse);
+
+        let data;
+        try {
+          data = JSON.parse(rawResponse);
+          console.log('Parsed tags data:', data);
+
+          if (Array.isArray(data)) {
+            // Log the structure of the first item if it exists
+            if (data.length > 0) {
+              console.log('First tag structure:', data[0]);
+            }
+
+            const tagNames = data.map(tag => {
+              console.log('Processing tag:', tag);
+              return typeof tag === 'string' ? tag : tag.name;
+            });
+
+            console.log('Final processed tag names:', tagNames);
+            setTags(tagNames);
+          } else {
+            console.log('Received data is not an array:', data);
+          }
+        } catch (parseError) {
+          console.error('Error parsing tags response:', parseError);
+        }
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+      }
+    };
+
+    console.log('Tags effect triggered with noteId:', noteId);
+    fetchNoteTags();
+  }, [noteId]);
+
   const handleTitleClick = () => {
     setIsEditing(true);
   };
@@ -751,21 +878,29 @@ const EditorContent: React.FC<EditorContentProps> = ({
     // Only update if title has changed
     if (title !== previousTitle && noteId) {
       try {
-        const response = await fetch(`/api/notes?noteId=${noteId}`, {
+        const response = await fetch(`/api/notes`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ title }),
+          body: JSON.stringify({
+            noteId: noteId,
+            title
+          }),
         });
 
-        if (response.ok) {
-          setPreviousTitle(title);
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('Failed to update title:', errorData);
+          // Revert to previous title on error
+          setTitle(previousTitle);
         } else {
-          console.error('Failed to update title');
+          setPreviousTitle(title);
         }
       } catch (error) {
         console.error('Error updating title:', error);
+        // Revert to previous title on error
+        setTitle(previousTitle);
       }
     }
   };
@@ -776,28 +911,8 @@ const EditorContent: React.FC<EditorContentProps> = ({
 
   const handleTitleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      setIsEditing(false);
-      
-      // Only update if title has changed
-      if (title !== previousTitle && noteId) {
-        try {
-          const response = await fetch(`/api/notes?noteId=${noteId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ title }),
-          });
-
-          if (response.ok) {
-            setPreviousTitle(title);
-          } else {
-            console.error('Failed to update title');
-          }
-        } catch (error) {
-          console.error('Error updating title:', error);
-        }
-      }
+      e.preventDefault();
+      await handleTitleBlur(); // Reuse the same logic for blur
     }
   };
 
@@ -884,18 +999,36 @@ const EditorContent: React.FC<EditorContentProps> = ({
             <span>Tags:</span>
             <div className="flex flex-wrap gap-2 items-center">
               {tags.map((tag, index) => (
-                <Badge 
-                  key={index} 
-                  variant="outline" 
+                <Badge
+                  key={index}
+                  variant="outline"
                   className="flex items-center gap-1 px-2 py-1"
                 >
                   {tag}
                   <X
                     size={12}
                     className="cursor-pointer hover:text-destructive"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
-                      setTags(tags.filter((_, i) => i !== index));
+                      try {
+                        const response = await fetch('/api/note-tags', {
+                          method: 'DELETE',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            noteId,
+                            tagName: tag
+                          })
+                        });
+
+                        if (!response.ok) {
+                          throw new Error('Failed to remove tag');
+                        }
+                        setTags(tags.filter((_, i) => i !== index));
+                      } catch (error) {
+                        console.error('Error removing tag:', error);
+                      }
                     }}
                   />
                 </Badge>
@@ -904,11 +1037,13 @@ const EditorContent: React.FC<EditorContentProps> = ({
                 type="text"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && tagInput.trim()) {
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
-                    setTags([...tags, tagInput.trim()]);
-                    setTagInput('');
+                    const trimmedTag = tagInput.trim();
+                    if (trimmedTag) {
+                      handleCreateTag(trimmedTag);
+                    }
                   }
                 }}
                 placeholder="Add tag..."

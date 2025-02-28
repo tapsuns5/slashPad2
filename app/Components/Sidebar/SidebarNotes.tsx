@@ -77,8 +77,8 @@ const SidebarNotes = () => {
     React.useEffect(() => {
         const fetchNotes = async () => {
             try {
-                const userId = 'cm7bbipbl0001cb5so38cbeid';
-                const response = await fetch(`/api/notes?userId=${userId}`);
+                // Get notes for the currently logged-in user
+                const response = await fetch('/api/notes');
                 
                 if (!response.ok) {
                     const error = await response.json();
