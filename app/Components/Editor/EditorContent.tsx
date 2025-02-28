@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { initializeClipboardCopy } from "@/app/utils/clipboardCopy";
 import editorExtensions from "./EditorExtensions";
 import { v4 as uuidv4 } from 'uuid';
+import { X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 // Define types for node attributes and details
 type NodeAttributes = {
@@ -573,6 +575,10 @@ const EditorContent: React.FC<EditorContentProps> = ({
   // Track initial content for setting after editor initialization
   const [initialContent, setInitialContent] = useState<string | null>(null);
 
+  // ... other state declarations ...
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+
   useEffect(() => {
     const fetchBlockContent = async () => {
       if (!noteId) {
@@ -873,8 +879,43 @@ const EditorContent: React.FC<EditorContentProps> = ({
           </div>
         )}
         <div className=" pl-[3.6rem] text-gray-400 text-xs -mt-1">{formattedDate} </div>
-        <div className=" pl-[3.6rem] text-gray-600 text-xs -mt-1">Tags:
-          <Badge variant="outline" className="ml-5 mt-3">Tag</Badge>
+        <div className="pl-[3.6rem] text-gray-600 text-xs -mt-1">
+          <div className="flex items-center gap-2 mt-4">
+            <span>Tags:</span>
+            <div className="flex flex-wrap gap-2 items-center">
+              {tags.map((tag, index) => (
+                <Badge 
+                  key={index} 
+                  variant="outline" 
+                  className="flex items-center gap-1 px-2 py-1"
+                >
+                  {tag}
+                  <X
+                    size={12}
+                    className="cursor-pointer hover:text-destructive"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setTags(tags.filter((_, i) => i !== index));
+                    }}
+                  />
+                </Badge>
+              ))}
+              <Input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && tagInput.trim()) {
+                    e.preventDefault();
+                    setTags([...tags, tagInput.trim()]);
+                    setTagInput('');
+                  }
+                }}
+                placeholder="Add tag..."
+                className="h-6 w-20 text-xs min-w-[80px] border-[#e2e7ee] focus:border-[#e2e7ee] focus-visible:ring-0 placeholder:text-[12px]"
+              />
+            </div>
+          </div>
         </div>
         <div className=" pl-[3.6rem] text-gray-600 text-xs -mt-1">Meeting:
           <Badge variant="outline" className="ml-5 mt-3">Meeting</Badge>
