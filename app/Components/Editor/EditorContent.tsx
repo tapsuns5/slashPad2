@@ -984,7 +984,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
                 }}
                 selectFirstItem
                 inputProps={{
-                  className: "outline-none border-none focus:border-none focus:ring-0"
+                  className: "outline-none border-none focus:border-none focus:ring-0 placeholder:text-gray-400"
                 }}
                 onChange={async (newOptions) => {
                   const newTags = newOptions.map(opt => opt.value);
