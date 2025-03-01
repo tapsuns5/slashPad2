@@ -490,10 +490,22 @@
 }
 
 .ProseMirror-selectednode {
-    outline: var(--drag-hover) !important;
-    background-color: var(--drag-hover);
-    transition: background-color 0.2s;
-    box-shadow: none;
+    background-color: #e6f7ff !important;
+    outline: none !important;
+    transition: background-color 0.2s ease;
+}
+
+.ProseMirror .ProseMirror-selectednode {
+  background-color: #e6f7ff !important;
+  outline: none !important;
+  transition: background-color 0.2s ease;
+}
+
+.ProseMirror p.ProseMirror-selectednode,
+.ProseMirror h1.ProseMirror-selectednode,
+.ProseMirror h2.ProseMirror-selectednode,
+.ProseMirror h3.ProseMirror-selectednode {
+  background-color: #e6f7ff !important;
 }
 
 .drag-handle {

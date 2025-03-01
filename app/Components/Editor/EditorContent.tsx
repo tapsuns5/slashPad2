@@ -52,6 +52,7 @@ interface EditorContentProps {
   extensions?: Extension[];
   content?: string;
   noteId?: number;
+  onKeyDown?: (e: KeyboardEvent) => void;
 }
 
 // Define precise types for block and content

@@ -46,6 +46,7 @@ const EditorComponent: React.FC<EditorProps> = ({
   const [noteId, setNoteId] = React.useState<number | null>(null);
   const [showActions, setShowActions] = React.useState(false);
   const [actionPosition, setActionPosition] = React.useState({ x: 0, y: 0 });
+  const currentNodeRef = React.useRef<{ pos: number; nodeType: string } | null>(null);
 
   // Move all useEffect hooks together
   React.useEffect(() => {
@@ -80,6 +81,25 @@ const EditorComponent: React.FC<EditorProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showActions]);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!editorInstance) return;
+    
+    if ((e.key === 'Delete' || e.key === 'Backspace') && editorInstance.state.selection.constructor.name === 'NodeSelection') {
+      e.preventDefault();
+      const { selection } = editorInstance.state;
+      const from = selection.$from.before();
+      const to = selection.$from.after();
+      
+      editorInstance.chain()
+        .focus()
+        .command(({ tr }) => {
+          tr.delete(from, to);
+          return true;
+        })
+        .run();
+    }
+  };
 
   // Only render on client
   if (!isClient) {
@@ -129,6 +149,7 @@ const EditorComponent: React.FC<EditorProps> = ({
       <div className={`transition-all duration-300 ${isSidebarOpen ? "ml-0" : "ml-0"}`}>
         <EditorContent 
           editorRef={handleEditorReady}
+          onKeyDown={handleKeyDown}
           extensions={extensions}
           content={content}
           noteId={noteId || undefined}
@@ -139,21 +160,62 @@ const EditorComponent: React.FC<EditorProps> = ({
             <DragHandle 
               editor={editorInstance}
               className="drag-handle custom-drag-handle [&.dragging]:cursor-grabbing"
-              
+              onNodeChange={({ node, pos }) => {
+                if (!node) return;
+                
+                currentNodeRef.current = { 
+                  pos,
+                  nodeType: node.type.name 
+                };
+                
+                console.log('🔍 onNodeChange:', {
+                  type: node.type.name,
+                  text: node.textContent,
+                  pos,
+                  stored: currentNodeRef.current
+                });
+              }}
             >
               <div 
                 ref={dragHandleRef}
-                onClick={handleDragHandleClick}
+                onClick={(e) => {
+                  console.log('👆 Drag handle clicked');
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
+                  if (!currentNodeRef.current) {
+                    console.error('❌ No node position stored');
+                    return;
+                  }
+                  
+                  try {
+                    const pos = currentNodeRef.current.pos;
+                    console.log('📍 Using position:', pos);
+                    
+                    editorInstance.commands.focus();
+                    editorInstance.commands.setNodeSelection(pos);
+                    
+                    console.log('✅ Selection set successfully');
+                  } catch (error) {
+                    console.error('❌ Selection error:', error);
+                  }
+                  
+                  handleDragHandleClick(e);
+                }}
+                onDragStart={(e) => {
+                  console.log('🚫 Drag prevented');
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 className="hover:cursor-pointer active:cursor-grabbing [&.dragging]:cursor-grabbing w-6 h-6"
                 style={{ backgroundColor: 'transparent' }}
-                onMouseEnter={() => console.log('Mouse entered drag handle')}
-                onMouseDown={() => console.log('Mouse down on drag handle')}
               />
             </DragHandle>
             <BlockActions
               isOpen={showActions}
               onClose={() => setShowActions(false)}
               position={actionPosition}
+              editor={editorInstance}
             />
           </>
         )}

@@ -116,7 +116,11 @@
   animation-name: slideRightAndFade;
 }
 
-
+/* ProseMirror node selection styles */
+.ProseMirror-selectednode {
+  background-color: #cef0ff;
+  outline: none;
+}
 
 @layer base {
   * {
