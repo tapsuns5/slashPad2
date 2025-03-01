@@ -21,6 +21,7 @@ import editorExtensions from "./EditorExtensions";
 import { v4 as uuidv4 } from 'uuid';
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import MultipleSelector from "@/components/ui/multiselect";
 
 // Define types for node attributes and details
 type NodeAttributes = {
@@ -589,65 +590,6 @@ const EditorContent: React.FC<EditorContentProps> = ({
   const [initialContent, setInitialContent] = useState<string | null>(null);
 
   // ... other state declarations ...
-  const [tagInput, setTagInput] = useState("");
-
-  // Add this function inside the component
-  // Update the handleCreateTag function to be more robust
-  const handleCreateTag = async (tagName: string) => {
-    if (!noteId || !tagName.trim()) return;
-    
-    try {
-      const trimmedName = tagName.trim();
-      console.log('Creating tag:', trimmedName);
-      
-      const tagResponse = await fetch('/api/tags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: trimmedName
-          // userId will be handled by the API route using the session
-        })
-      });
-  
-      if (!tagResponse.ok) {
-        const errorData = await tagResponse.text();
-        console.error('Tag creation failed:', errorData);
-        throw new Error(`Failed to create tag: ${errorData}`);
-      }
-  
-      const tag = await tagResponse.json();
-      console.log('Tag created successfully:', tag);
-  
-      // Only proceed with linking if we have a valid tag ID
-      if (tag && tag.id) {
-        const linkResponse = await fetch('/api/note-tags', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            noteId: noteId,
-            tagId: tag.id 
-          })
-        });
-  
-        if (!linkResponse.ok) {
-          const linkErrorData = await linkResponse.text();
-          console.error('Tag linking failed:', linkErrorData);
-          throw new Error(`Failed to link tag: ${linkErrorData}`);
-        }
-  
-        setTags(prevTags => [...prevTags, trimmedName]);
-        setTagInput('');
-      }
-    } catch (error) {
-      console.error('Detailed error creating tag:', error);
-      // Don't throw the error, just log it
-      setTagInput(''); // Clear input even if there's an error
-    }
-  };
 
   useEffect(() => {
     const fetchBlockContent = async () => {
@@ -995,59 +937,142 @@ const EditorContent: React.FC<EditorContentProps> = ({
         )}
         <div className=" pl-[3.6rem] text-gray-400 text-xs -mt-1">{formattedDate} </div>
         <div className="pl-[3.6rem] text-gray-600 text-xs -mt-1">
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex items-center gap-2 mt-4 relative z-50">
             <span>Tags:</span>
-            <div className="flex flex-wrap gap-2 items-center">
-              {tags.map((tag, index) => (
-                <Badge
-                  key={index}
-                  variant="outline"
-                  className="flex items-center gap-1 px-2 py-1"
-                >
-                  {tag}
-                  <X
-                    size={12}
-                    className="cursor-pointer hover:text-destructive"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      try {
-                        const response = await fetch('/api/note-tags', {
+            <div className="flex flex-wrap gap-2 items-center bg-[#fcfcfc]">
+              <MultipleSelector
+                value={tags.map(tag => ({ value: tag, label: tag }))}
+                placeholder="Search or create tags..."
+                onSearch={async (searchTerm) => {
+                  // Fetch all user's tags
+                  const tagsResponse = await fetch('/api/tags');
+                  const userTags = await tagsResponse.json();
+                  
+                  // Define the type for tags from the API
+                  interface TagFromAPI {
+                    id: string;
+                    name: string;
+                    userId: string;
+                    createdAt: string;
+                  }
+                  
+                  // Filter tags based on search term
+                  const filteredTags = userTags
+                    .map((tag: TagFromAPI) => ({
+                      value: tag.name,
+                      label: tag.name
+                    }))
+                    .filter((tag: { label: string; value: string }) => 
+                      tag.label.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                  
+                  // If search term doesn't match any existing tags, add option to create it
+                  if (searchTerm && !filteredTags.some((tag: { label: string; value: string }) => tag.label.toLowerCase() === searchTerm.toLowerCase())) {
+                    const createTag = {
+                      value: searchTerm,
+                      label: `Create "${searchTerm}"`,
+                    };
+                    const existingCreateTag = filteredTags.find(tag => tag.label === createTag.label);
+                    if (!existingCreateTag) {
+                      filteredTags.push(createTag);
+                    }
+                  }
+                  
+                  return filteredTags;
+                }}
+                className="min-w-[200px] border-none"
+                commandProps={{
+                  className: "bg-[#fcfcfc] border-[#e2e7ee]"
+                }}
+                selectFirstItem
+                inputProps={{
+                  className: "outline-none border-none focus:border-none focus:ring-0"
+                }}
+                onChange={async (newOptions) => {
+                  const newTags = newOptions.map(opt => opt.value);
+                  const removedTags = tags.filter(tag => !newTags.includes(tag));
+                  const addedTags = newTags.filter(tag => !tags.includes(tag));
+                  
+                  console.log('Handling tags:', { 
+                    noteId,
+                    removedTags,
+                    addedTags,
+                    currentTags: tags 
+                  });
+
+                  // Handle removed tags
+                  for (const removedTag of removedTags) {
+                    try {
+                      // First get all user's tags to find the ID
+                      const tagsResponse = await fetch('/api/tags');
+                      const userTags = await tagsResponse.json();
+                      console.log('Found user tags:', userTags);
+                      
+                      const tagToRemove = userTags.find((tag: { name: string }) => tag.name === removedTag);
+                      console.log('Tag to remove:', { removedTag, tagToRemove });
+                      
+                      if (tagToRemove) {
+                        const url = `/api/note-tags?noteId=${noteId}&tagId=${tagToRemove.id}`;
+                        console.log('Removing tag with URL:', url);
+                        
+                        // Remove the note-tag association
+                        const response = await fetch(url, {
                           method: 'DELETE',
                           headers: {
                             'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({
-                            noteId,
-                            tagName: tag
-                          })
+                          }
+                        });
+
+                        const result = await response.json();
+                        console.log('Remove tag response:', { 
+                          ok: response.ok, 
+                          status: response.status,
+                          result 
                         });
 
                         if (!response.ok) {
-                          throw new Error('Failed to remove tag');
+                          console.error(`Failed to remove tag from note:`, { 
+                            removedTag,
+                            error: result 
+                          });
                         }
-                        setTags(tags.filter((_, i) => i !== index));
-                      } catch (error) {
-                        console.error('Error removing tag:', error);
+                      } else {
+                        console.error('Tag not found in user tags:', removedTag);
                       }
-                    }}
-                  />
-                </Badge>
-              ))}
-              <Input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const trimmedTag = tagInput.trim();
-                    if (trimmedTag) {
-                      handleCreateTag(trimmedTag);
+                    } catch (error) {
+                      console.error('Error removing tag:', { 
+                        removedTag, 
+                        error,
+                        noteId,
+                      });
                     }
                   }
+
+                  // Handle added tags
+                  for (const newTag of addedTags) {
+                    try {
+                      const response = await fetch('/api/note-tags', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          noteId,
+                          tagName: newTag.trim()
+                        })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Failed to create tag');
+                      }
+                    } catch (error) {
+                      console.error('Error creating tag:', error);
+                      return; // Exit if creation fails
+                    }
+                  }
+                  
+                  setTags(newTags);
                 }}
-                placeholder="Add tag..."
-                className="h-6 w-20 text-xs min-w-[80px] border-[#e2e7ee] focus:border-[#e2e7ee] focus-visible:ring-0 placeholder:text-[12px]"
               />
             </div>
           </div>

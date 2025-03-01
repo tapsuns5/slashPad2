@@ -11,8 +11,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { noteId, tagId } = await req.json();
-    console.log('Received payload:', { noteId, tagId });
+    const { noteId, tagName } = await req.json();
+    console.log('Received payload:', { noteId, tagName });
 
     // First get the user's ID
     const user = await prisma.user.findUnique({
@@ -43,15 +43,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 });
     }
 
+    // First, find or create the tag
+    const tag = await prisma.tag.upsert({
+      where: {
+        name_userId: {
+          name: tagName,
+          userId: user.id
+        }
+      },
+      update: {},
+      create: {
+        name: tagName,
+        userId: user.id
+      }
+    });
+
     // Create the note-tag relationship
     const noteTag = await prisma.noteTags.create({
       data: {
         noteId: typeof noteId === 'string' ? parseInt(noteId) : noteId,
-        tagId,
+        tagId: tag.id,
       },
     });
 
-    return NextResponse.json(noteTag);
+    return NextResponse.json({ ...noteTag, tagName });
   } catch (error) {
     console.error('Error creating note tag:', error);
     return NextResponse.json(
@@ -80,28 +95,66 @@ export async function DELETE(req: Request) {
       );
     }
 
+    // Get the user's ID
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Verify the note belongs to the user
     const note = await prisma.note.findFirst({
       where: {
         id: parseInt(noteId),
-        userId: session.user.email,
+        userId: user.id,
       },
     });
 
     if (!note) {
-      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Note not found or unauthorized' }, { status: 404 });
     }
 
-    await prisma.noteTags.delete({
+    // Verify the tag belongs to the user
+    const tag = await prisma.tag.findFirst({
       where: {
-        noteId_tagId: {
-          noteId: parseInt(noteId),
-          tagId: tagId, // No need to parse as int since tagId is String
-        },
+        id: tagId,
+        userId: user.id,
       },
     });
 
-    return NextResponse.json({ success: true });
+    if (!tag) {
+      return NextResponse.json({ error: 'Tag not found or unauthorized' }, { status: 404 });
+    }
+
+    try {
+      await prisma.noteTags.delete({
+        where: {
+          noteId_tagId: {
+            noteId: parseInt(noteId),
+            tagId: tagId,
+          },
+        },
+      });
+
+      return NextResponse.json({ success: true });
+    } catch (deleteError) {
+      console.error('Error deleting note-tag relationship:', deleteError);
+      
+      // Type check for Prisma error
+      if (deleteError && typeof deleteError === 'object' && 'code' in deleteError) {
+        if (deleteError.code === 'P2025') {
+          return NextResponse.json(
+            { error: 'Note-tag relationship not found' },
+            { status: 404 }
+          );
+        }
+      }
+      
+      throw deleteError; // Re-throw for general error handling
+    }
   } catch (error) {
     console.error('Error deleting note tag:', error);
     return NextResponse.json(
@@ -160,6 +213,44 @@ export async function GET(req: Request) {
     console.error('Error fetching note tags:', error);
     return NextResponse.json(
       { error: 'Failed to fetch note tags' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GETUserTags() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get the user ID first
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Fetch all unique tags for the user's notes
+    const userTags = await prisma.tag.findMany({
+      where: {
+        userId: user.id
+      },
+      select: {
+        name: true
+      },
+      distinct: ['name']
+    });
+
+    return NextResponse.json(userTags.map(tag => tag.name));
+  } catch (error) {
+    console.error('Error fetching user tags:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch user tags' },
       { status: 500 }
     );
   }
