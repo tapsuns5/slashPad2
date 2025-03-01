@@ -19,8 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { initializeClipboardCopy } from "@/app/utils/clipboardCopy";
 import editorExtensions from "./EditorExtensions";
 import { v4 as uuidv4 } from 'uuid';
-import { X } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import MultipleSelector from "@/components/ui/multiselect";
 
 // Define types for node attributes and details
@@ -943,7 +941,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
               <MultipleSelector
                 value={tags.map(tag => ({ value: tag, label: tag }))}
                 placeholder="Search or create tags..."
-                onSearch={async (searchTerm) => {
+                onSearch={async (searchTerm: string) => {
                   // Fetch all user's tags
                   const tagsResponse = await fetch('/api/tags');
                   const userTags = await tagsResponse.json();
@@ -957,7 +955,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
                   }
                   
                   // Filter tags based on search term
-                  const filteredTags = userTags
+                  const filteredTags: { label: string; value: string }[] = userTags
                     .map((tag: TagFromAPI) => ({
                       value: tag.name,
                       label: tag.name
@@ -972,7 +970,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
                       value: searchTerm,
                       label: `Create "${searchTerm}"`,
                     };
-                    const existingCreateTag = filteredTags.find(tag => tag.label === createTag.label);
+                    const existingCreateTag = filteredTags.find((tag: { label: string; value: string }) => tag.label === createTag.label);
                     if (!existingCreateTag) {
                       filteredTags.push(createTag);
                     }
