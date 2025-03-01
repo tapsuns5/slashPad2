@@ -47,6 +47,7 @@ const EditorComponent: React.FC<EditorProps> = ({
   const [showActions, setShowActions] = React.useState(false);
   const [actionPosition, setActionPosition] = React.useState({ x: 0, y: 0 });
   const currentNodeRef = React.useRef<{ pos: number; nodeType: string } | null>(null);
+  const [selectedNodePos, setSelectedNodePos] = React.useState<number | null>(null);
 
   // Move all useEffect hooks together
   React.useEffect(() => {
@@ -122,24 +123,30 @@ const EditorComponent: React.FC<EditorProps> = ({
     
     const rect = dragHandleRef.current?.getBoundingClientRect();
     if (rect) {
-        // Remove previous highlight
-        document.querySelectorAll('.selected-node').forEach(el => {
-            el.classList.remove('selected-node');
-        });
+      // Remove previous highlight
+      document.querySelectorAll('.selected-node').forEach(el => {
+        el.classList.remove('selected-node');
+      });
 
-        // Add highlight to the current node
-        const currentNode = editorInstance?.view.domAtPos(editorInstance.state.selection.from)?.node;
-        if (currentNode && currentNode.parentElement) {
-            currentNode.parentElement.classList.add('selected-node');
-        }
+      // Add highlight to the current node
+      const currentNode = editorInstance?.view.domAtPos(editorInstance.state.selection.from)?.node;
+      if (currentNode && currentNode.parentElement) {
+        currentNode.parentElement.classList.add('selected-node');
+      }
 
-        setActionPosition({
-            x: rect.right + 10,
-            y: rect.top,
-        });
-        setShowActions(true);
+      // Store the position
+      if (currentNodeRef.current) {
+        setSelectedNodePos(currentNodeRef.current.pos);
+        editorInstance?.commands.setNodeSelection(currentNodeRef.current.pos);
+      }
+
+      setActionPosition({
+        x: rect.right + 10,
+        y: rect.top,
+      });
+      setShowActions(true);
     }
-};
+  };
 
   console.log('DragHandle rendered:', !!editorInstance); // Add this to check if DragHandle is rendering
 
@@ -178,44 +185,20 @@ const EditorComponent: React.FC<EditorProps> = ({
             >
               <div 
                 ref={dragHandleRef}
-                onClick={(e) => {
-                  console.log('👆 Drag handle clicked');
-                  e.preventDefault();
-                  e.stopPropagation();
-                  
-                  if (!currentNodeRef.current) {
-                    console.error('❌ No node position stored');
-                    return;
-                  }
-                  
-                  try {
-                    const pos = currentNodeRef.current.pos;
-                    console.log('📍 Using position:', pos);
-                    
-                    editorInstance.commands.focus();
-                    editorInstance.commands.setNodeSelection(pos);
-                    
-                    console.log('✅ Selection set successfully');
-                  } catch (error) {
-                    console.error('❌ Selection error:', error);
-                  }
-                  
-                  handleDragHandleClick(e);
-                }}
-                onDragStart={(e) => {
-                  console.log('🚫 Drag prevented');
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
+                onClick={handleDragHandleClick}
                 className="hover:cursor-pointer active:cursor-grabbing [&.dragging]:cursor-grabbing w-6 h-6"
                 style={{ backgroundColor: 'transparent' }}
               />
             </DragHandle>
             <BlockActions
               isOpen={showActions}
-              onClose={() => setShowActions(false)}
+              onClose={() => {
+                setShowActions(false);
+                setSelectedNodePos(null);
+              }}
               position={actionPosition}
               editor={editorInstance}
+              selectedNodePos={selectedNodePos}
             />
           </>
         )}
