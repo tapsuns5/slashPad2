@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { nanoid } from 'nanoid';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -29,12 +29,28 @@ export async function GET(request: Request) {
         content: true,
         createdAt: true,
         updatedAt: true,
-        slug: true
+        slug: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+                id: true
+              }
+            }
+          }
+        }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { updatedAt: 'desc' }
     });
 
-    return NextResponse.json(notes);
+    // Transform the response to flatten the tags structure
+    const transformedNotes = notes.map(note => ({
+      ...note,
+      tags: note.tags.map(t => t.tag.name)
+    }));
+
+    return NextResponse.json(transformedNotes);
   } catch (error) {
     console.error('Error fetching notes:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

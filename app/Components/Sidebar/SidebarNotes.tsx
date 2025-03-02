@@ -29,7 +29,8 @@ const SidebarNotes = () => {
     const [noteContents, setNoteContents] = React.useState<Record<number, string>>({})
     const [searchQuery, setSearchQuery] = React.useState("")
     const [sortBy, setSortBy] = React.useState("newest")
-    const [filter, setFilter] = React.useState("all")
+    const [selectedTag, setSelectedTag] = React.useState("all")
+    const [availableTags, setAvailableTags] = React.useState<string[]>([])
 
     // Utility functions
     const formatDate = (dateString: string) => {
@@ -73,11 +74,10 @@ const SidebarNotes = () => {
         }
     }, []);
 
-    // Fetch notes
+    // Fetch notes and extract tags
     React.useEffect(() => {
         const fetchNotes = async () => {
             try {
-                // Get notes for the currently logged-in user
                 const response = await fetch('/api/notes');
                 
                 if (!response.ok) {
@@ -87,6 +87,13 @@ const SidebarNotes = () => {
                 
                 const data = await response.json();
                 setNotes(data);
+
+                // Extract unique tags
+                const uniqueTags = new Set<string>();
+                data.forEach((note: Note) => {
+                    note.tags?.forEach(tag => uniqueTags.add(tag));
+                });
+                setAvailableTags(Array.from(uniqueTags).sort());
             } catch (error) {
                 console.error('Failed to fetch notes:', error);
             }
@@ -102,12 +109,14 @@ const SidebarNotes = () => {
         if (searchQuery) {
             filtered = filtered.filter(note =>
                 note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                note.content.toLowerCase().includes(searchQuery.toLowerCase())
+                (noteContents[note.id] || '').toLowerCase().includes(searchQuery.toLowerCase())
             )
         }
     
-        if (filter !== 'all') {
-            filtered = filtered.filter(note => note.category && note.category === filter)
+        if (selectedTag !== 'all') {
+            filtered = filtered.filter(note => 
+                note.tags?.includes(selectedTag)
+            )
         }
     
         filtered.sort((a, b) => {
@@ -124,7 +133,7 @@ const SidebarNotes = () => {
         })
 
         return filtered
-    }, [notes, searchQuery, sortBy, filter])
+    }, [notes, searchQuery, sortBy, selectedTag, noteContents])
 
     // Fetch contents for visible notes
     React.useEffect(() => {
@@ -135,7 +144,7 @@ const SidebarNotes = () => {
         unfetchedNotes.forEach(note => {
             fetchNoteContent(note.id);
         });
-    }, [filteredAndSortedNotes, fetchNoteContent]); // Removed noteContents from dependencies
+    }, [filteredAndSortedNotes, fetchNoteContent, noteContents]);
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -160,19 +169,20 @@ const SidebarNotes = () => {
                             <SelectItem value="title">Title</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Select value={filter} onValueChange={setFilter}>
+                    <Select value={selectedTag} onValueChange={setSelectedTag}>
                         <SelectTrigger className="h-7 text-xs px-2 border-[#e2e7ee] rounded-none">
-                            <SelectValue placeholder="Filter" />
+                            <SelectValue placeholder="Filter by tag" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="personal">Personal</SelectItem>
-                            <SelectItem value="work">Work</SelectItem>
+                            <SelectItem value="all">All tags</SelectItem>
+                            {availableTags.map(tag => (
+                                <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
             </div>
-            <div className="flex-1 overflow-auto p-1">
+            <div className="flex-1 overflow-auto px-2 mt-2">
                 <div className="grid gap-1">
                     {filteredAndSortedNotes.length > 0 ? (
                         filteredAndSortedNotes.map((note) => (
