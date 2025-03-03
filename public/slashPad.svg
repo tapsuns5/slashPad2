@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 233.26">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #333;
+        font-family: Aver-Bold, Aver;
+        font-size: 240.18px;
+        font-weight: 700;
+        stroke: #333;
+        stroke-miterlimit: 10;
+        stroke-width: 9.97px;
+      }
+
+      .cls-2 {
+        letter-spacing: 0em;
+      }
+
+      .cls-3 {
+        letter-spacing: -.05em;
+      }
+    </style>
+  </defs>
+  <text class="cls-1" transform="translate(67.62 202.62)"><tspan x="0" y="0">S/ash </tspan><tspan class="cls-3" x="662.14" y="0">P</tspan><tspan class="cls-2" x="791.37" y="0">ad</tspan></text>
+</svg>

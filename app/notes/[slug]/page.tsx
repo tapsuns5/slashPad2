@@ -5,11 +5,13 @@ import * as TiptapReact from "@tiptap/react"
 import dynamic from "next/dynamic"
 import { useEditor } from "@tiptap/react"
 import editorExtensions from "../../Components/Editor/EditorExtensions"
+import { useSidebar } from "../../Components/Sidebar/SidebarContext"
 import { PanelRight, Slash } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../../Components/Sidebar/SidebarMenu"
-import { SidebarProvider, useSidebar } from "../../Components/Sidebar/SidebarContext"
+import { SidebarProvider } from "../../Components/Sidebar/SidebarContext"
 import { useParams } from 'next/navigation'
+import Image from 'next/image'
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -19,12 +21,6 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
-const EditorComponent = dynamic(() => import("../../Components/Editor/Editor"), {
-    ssr: false,
-    loading: () => <div>Loading editor...</div>
-});
-
-// Add this interface near the top of the file, after the imports
 interface NoteData {
     id: string;
     slug: string;
@@ -33,6 +29,11 @@ interface NoteData {
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+const EditorComponent = dynamic(() => import("../../Components/Editor/Editor"), {
+    ssr: false,
+    loading: () => <div>Loading editor...</div>
+});
 
 const PageContent = () => {
     const params = useParams()
@@ -88,22 +89,32 @@ const PageContent = () => {
                                     </button>
                                 </div>
                             )}
-                            <div className="flex-1 px-8 mb-8">
-                                <Breadcrumb>
-                                    <BreadcrumbList>
-                                        <BreadcrumbItem>
-                                            <BreadcrumbLink className= "text-[#5f5e5b]" href="/notes">Notes</BreadcrumbLink>
-                                        </BreadcrumbItem>
-                                        <BreadcrumbSeparator>
-                                            <Slash className="h-4 w-4" />
-                                        </BreadcrumbSeparator>
-                                        <BreadcrumbItem>
-                                            <BreadcrumbPage>
-                                                {noteData?.title || 'Untitled'}
-                                            </BreadcrumbPage>
-                                        </BreadcrumbItem>
-                                    </BreadcrumbList>
-                                </Breadcrumb>
+                            <div className="flex-1 px-8 mb-8 relative flex items-center justify-between">
+                                <div>
+                                    <Breadcrumb>
+                                        <BreadcrumbList>
+                                            <BreadcrumbItem>
+                                                <BreadcrumbLink className= "text-[#5f5e5b]" href="/notes">Notes</BreadcrumbLink>
+                                            </BreadcrumbItem>
+                                            <BreadcrumbSeparator>
+                                                <Slash className="h-4 w-4" />
+                                            </BreadcrumbSeparator>
+                                            <BreadcrumbItem>
+                                                <BreadcrumbPage>
+                                                    {noteData?.title || 'Untitled'}
+                                                </BreadcrumbPage>
+                                            </BreadcrumbItem>
+                                        </BreadcrumbList>
+                                    </Breadcrumb>
+                                </div>
+                                <div className="absolute left-1/2 transform -translate-x-1/2 -translate-x-[80%]">
+                                    <Image 
+                                        src="/slashPad.svg" 
+                                        alt="SlashPad Logo" 
+                                        width={100} 
+                                        height={100} 
+                                    />
+                                </div>
                             </div>
                         </header>
                     </div>
