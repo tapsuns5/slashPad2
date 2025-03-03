@@ -11,7 +11,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../../Components/Sidebar/SidebarMenu"
 import { SidebarProvider } from "../../Components/Sidebar/SidebarContext"
 import { useParams } from 'next/navigation'
-import Image from 'next/image'
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -106,14 +105,6 @@ const PageContent = () => {
                                             </BreadcrumbItem>
                                         </BreadcrumbList>
                                     </Breadcrumb>
-                                </div>
-                                <div className="absolute left-1/2 transform -translate-x-1/2 -translate-x-[80%]">
-                                    <Image 
-                                        src="/slashPad.svg" 
-                                        alt="SlashPad Logo" 
-                                        width={100} 
-                                        height={100} 
-                                    />
                                 </div>
                             </div>
                         </header>

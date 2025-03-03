@@ -5,11 +5,10 @@ import { CalendarIcon, ChevronLeft, ChevronRight, Home, PanelLeft, Search, Stick
 import { SidebarCalendar } from "./SidebarCalendar"
 import { SidebarNotes } from "./SidebarNotes"
 import { useSidebar } from "./SidebarContext"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createNewNote } from '@/app/utils/createNote'
 import { useRouter } from 'next/navigation'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
+import Image from 'next/image';
 
 const navItems = [
     {
@@ -41,12 +40,6 @@ const navItems = [
         icon: SquareCheck,
         url: "#",
     },
-]
-
-const workspaces = [
-    { value: "personal", label: "Personal" },
-    { value: "work", label: "Work" },
-    { value: "project", label: "Project" },
 ]
 
 export const Sidebar = ({ 
@@ -106,18 +99,13 @@ export const Sidebar = ({
         >
           <div className="sticky top-0 z-10 border-b bg-[#f8f8f7]">
             <div className="flex items-center justify-between p-2">
-              <Select>
-                <SelectTrigger className="w-[180px] border-0 shadow-none focus:ring-0 hover:bg-transparent">
-                  <SelectValue placeholder="Select workspace" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workspaces.map((workspace) => (
-                    <SelectItem key={workspace.value} value={workspace.value}>
-                      {workspace.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Image 
+                src="/slashPad.svg" 
+                alt="SlashPad Logo" 
+                width={100} 
+                height={40} 
+                className="object-contain"
+              />
               <div className="flex items-center gap-1">
                 <button onClick={toggleSidebar} className="p-2 ml-2">
                   <TooltipProvider delayDuration={200}>
