@@ -25,6 +25,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import CalendarEventActions from './CalendarEventActions'
 
 // Update the Event type to match CalendarEvent
 type Event = CalendarEvent;
@@ -185,6 +186,32 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
         const firstDayNextMonth = addMonths(firstDayCurrentMonth, 1)
         setCurrentMonth(format(firstDayNextMonth, "MMM-yyyy"))
     }
+    
+    // Add this new state for context menu
+    const [contextMenu, setContextMenu] = React.useState<{
+        isOpen: boolean;
+        position: { x: number; y: number };
+        event: Event | null;
+    }>({
+        isOpen: false,
+        position: { x: 0, y: 0 },
+        event: null,
+    });
+
+    // Add this useEffect to handle clicking outside the context menu
+    React.useEffect(() => {
+        const handleClickOutside = () => {
+            setContextMenu(prev => ({ ...prev, isOpen: false }));
+        };
+
+        if (contextMenu.isOpen) {
+            document.addEventListener('click', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [contextMenu.isOpen]);
 
     return (
         <div className="flex flex-col px-2 py-1">
@@ -268,6 +295,14 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
                                         marginTop: `${event.time.includes("6:00") ? "0" : "0.75rem"}`,
                                         height: `${event.durationHours * 3}rem`,
                                     }}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        setContextMenu({
+                                            isOpen: true,
+                                            position: { x: e.clientX, y: e.clientY },
+                                            event: event,
+                                        });
+                                    }}
                                 >
                                     <p className={cn("text-[10px] font-medium", style.text)}>{event.time}</p>
                                     <p className="mt-0.5 text-xs font-semibold text-foreground">{event.title}</p>
@@ -303,6 +338,16 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
                     </div>
                 </div>
             </div>
+            {contextMenu.event && (
+                <CalendarEventActions
+                    isOpen={contextMenu.isOpen}
+                    onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
+                    position={contextMenu.position}
+                    event={contextMenu.event}
+                    onLinkNote={handleLinkNote}
+                    onUnlinkNote={handleUnlinkNote}
+                />
+            )}
         </div>
     )
 }
