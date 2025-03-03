@@ -9,6 +9,7 @@ import { createNewNote } from '@/app/utils/createNote'
 import { useRouter } from 'next/navigation'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import Image from 'next/image';
+import { NavUser } from "@/components/ui/nav-user"
 
 const navItems = [
     {
@@ -175,6 +176,18 @@ export const Sidebar = ({
                     </a>
                 ))}
             </nav>
+          </div>
+          
+          {/* Add this at the bottom of the aside element */}
+          <div className="mt-auto border-t">
+            <NavUser 
+              user={{
+                name: "User Name",
+                email: "user@example.com",
+                avatar: "/avatar-placeholder.png"
+              }}
+              isMobile={!isOpen}
+            />
           </div>
         </aside>
         <div
