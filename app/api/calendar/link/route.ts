@@ -9,11 +9,19 @@ export async function POST(request: Request) {
     }
 
     try {
-        const { noteId, eventId } = await request.json();
+        const body = await request.json();
+        console.log('Received request body:', body);
 
+        const { noteId, eventId } = body;
+
+        if (!noteId || !eventId) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // First find the calendar integration
         const integration = await prisma.calendarIntegration.findFirst({
             where: {
-                userId: session.user.id,
+                userId: session.user.id
             }
         });
 
@@ -21,18 +29,28 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Calendar integration not found' }, { status: 404 });
         }
 
-        await prisma.calendarEvent.update({
+        // Create or update the event
+        const event = await prisma.calendarEvent.upsert({
             where: {
                 externalId_calendarIntegrationId: {
                     externalId: eventId,
                     calendarIntegrationId: integration.id
                 }
             },
-            data: {
+            create: {
+                externalId: eventId,
+                calendarIntegrationId: integration.id,
+                title: 'Linked Event', // Default title
+                startTime: new Date(), // Default to current time
+                endTime: new Date(),   // Default to current time
+                noteId: noteId
+            },
+            update: {
                 noteId: noteId
             }
         });
 
+        console.log('Created/Updated event:', event);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error linking note to event:', error);

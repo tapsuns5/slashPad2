@@ -44,9 +44,11 @@ const navItems = [
 ]
 
 export const Sidebar = ({ 
-    onSearchClick 
+    onSearchClick,
+    currentNoteId 
 }: { 
-    onSearchClick: () => void 
+    onSearchClick: () => void;
+    currentNoteId?: number;
 }) => {
     const router = useRouter()
     const { isOpen, toggleSidebar } = useSidebar()
@@ -92,26 +94,26 @@ export const Sidebar = ({
     };
 
     return (
-      <div className="flex h-screen">
-        <aside
-          className={`flex h-full w-60 flex-col border-r bg-[#f8f8f7] transition-all duration-300 ${
-            isOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div className="sticky top-0 z-10 border-b bg-[#f8f8f7]">
-            <div className="flex items-center justify-between p-2">
-              <Image 
-                src="/slashPad.svg" 
-                alt="SlashPad Logo" 
-                width={100} 
-                height={40} 
-                className="object-contain"
-              />
-              <div className="flex items-center gap-1">
-                <button onClick={toggleSidebar} className="p-2 ml-2">
-                  <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+        <div className="flex h-screen">
+            <aside
+              className={`flex h-full w-60 flex-col border-r bg-[#f8f8f7] transition-all duration-300 ${
+                isOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
+            >
+              <div className="sticky top-0 z-10 border-b bg-[#f8f8f7]">
+                <div className="flex items-center justify-between p-2">
+                  <Image 
+                    src="/slashPad.svg" 
+                    alt="SlashPad Logo" 
+                    width={100} 
+                    height={40} 
+                    className="object-contain"
+                  />
+                  <div className="flex items-center gap-1">
+                    <button onClick={toggleSidebar} className="p-2 ml-2">
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
                   <PanelLeft
                     strokeWidth={2}
                     className="h-[1.1rem] w-[1.1rem] text-[#91918e]"
@@ -199,18 +201,17 @@ export const Sidebar = ({
           </div>
         </div>
         <div
-          className={`transition-all duration-300 ease-in-out ${
-            isCalendarOpen ? "w-80" : "w-0"
-          } overflow-hidden`}
-        >
-          <div className="h-full w-80 border-r bg-background">
-            {shouldResetCalendar ? (
-              <SidebarCalendar key={Math.random()} />
-            ) : (
-              <SidebarCalendar />
-            )}
-          </div>
+            className={`transition-all duration-300 ease-in-out ${
+                isCalendarOpen ? "w-80" : "w-0"
+            } overflow-hidden`}>
+                <div className="h-full w-80 border-r bg-background">
+                    {shouldResetCalendar ? (
+                        <SidebarCalendar key={Math.random()} currentNoteId={currentNoteId} />
+                    ) : (
+                        <SidebarCalendar currentNoteId={currentNoteId} />
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
     );
 }

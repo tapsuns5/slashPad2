@@ -72,7 +72,10 @@ const PageContent = () => {
         <div className="min-h-screen bg-background text-foreground">
             <div className="flex h-screen">
                 <div className="h-screen sticky top-0">
-                    {isOpen && <Sidebar onSearchClick={() => setIsSearchOpen(true)} />}
+                    {isOpen && <Sidebar 
+                        onSearchClick={() => setIsSearchOpen(true)} 
+                        currentNoteId={noteData?.id ? parseInt(noteData.id) : undefined} 
+                    />}
                 </div>
 
                 <div className="flex-1 flex flex-col overflow-auto">

@@ -6,8 +6,9 @@ interface CalendarEventActionsProps {
   onClose: () => void;
   position: { x: number; y: number };
   event: CalendarEvent;
-  onLinkNote: (eventId: string) => void;
+  onLinkNote: (eventId: string, noteId: number) => void;
   onUnlinkNote: (eventId: string) => void;
+  currentNoteId?: number;
 }
 
 const CalendarEventActions: React.FC<CalendarEventActionsProps> = ({
@@ -17,6 +18,7 @@ const CalendarEventActions: React.FC<CalendarEventActionsProps> = ({
   event,
   onLinkNote,
   onUnlinkNote,
+  currentNoteId,
 }) => {
   if (!isOpen) return null;
 
@@ -24,7 +26,15 @@ const CalendarEventActions: React.FC<CalendarEventActionsProps> = ({
     {
       icon: "🔗",
       label: event.noteId ? "Unlink Note" : "Link Note",
-      onClick: () => event.noteId ? onUnlinkNote(event.id) : onLinkNote(event.id)
+      onClick: () => {
+        if (event.noteId) {
+          onUnlinkNote(event.id);
+        } else if (currentNoteId) {
+          onLinkNote(event.id, currentNoteId);
+        } else {
+          console.warn('No currentNoteId available for linking');
+        }
+      }
     },
     { icon: "📝", label: "Edit Event", onClick: () => console.log('Edit event clicked') },
     { icon: "🗑️", label: "Delete Event", onClick: () => console.log('Delete event clicked') },

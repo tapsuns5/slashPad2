@@ -8,11 +8,13 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { CalendarClientService } from '../../services/calendarClientService';
 
 interface CalendarEventItemProps {
-    event: CalendarEvent
-    onLinkNote: (eventId: string) => void
-    onUnlinkNote: (eventId: string) => void
+  event: CalendarEvent;
+  onLinkNote: (eventId: string, noteId: number) => void;
+  onUnlinkNote: (eventId: string) => void;
+  currentNoteId?: number;
 }
 
 function getEventStyle(theme: CalendarEvent["theme"]) {
@@ -40,9 +42,27 @@ function getEventStyle(theme: CalendarEvent["theme"]) {
     }
 }
 
-export function CalendarEventItem({ event, onLinkNote, onUnlinkNote }: CalendarEventItemProps) {
-    const style = getEventStyle(event.theme)
-    
+export function CalendarEventItem({ 
+  event, 
+  onLinkNote, 
+  onUnlinkNote,
+  currentNoteId
+}: CalendarEventItemProps) {
+  const handleLinkClick = () => {
+    if (!currentNoteId) {
+      console.error('No note ID available for linking');
+      return;
+    }
+
+    if (event.noteId) {
+      onUnlinkNote(event.id);
+    } else {
+      onLinkNote(event.id, currentNoteId);
+    }
+  };
+  
+  const style = getEventStyle(event.theme);
+  
     return (
         <div
             className={`rounded-md p-2 relative group ${style.background}`}
@@ -65,7 +85,8 @@ export function CalendarEventItem({ event, onLinkNote, onUnlinkNote }: CalendarE
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0"
-                                onClick={() => event.noteId ? onUnlinkNote(event.id) : onLinkNote(event.id)}
+                                onClick={handleLinkClick}
+                                disabled={!event.noteId && !currentNoteId}
                             >
                                 {event.noteId ? (
                                     <Unlink className="h-3 w-3" />

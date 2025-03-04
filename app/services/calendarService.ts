@@ -182,35 +182,6 @@ export class CalendarService {
             }
         });
     }
-
-    async linkNoteToEvent(noteId: number, eventId: string): Promise<void> {
-        await prisma.calendarEvent.update({
-            where: {
-                externalId_calendarIntegrationId: {
-                    externalId: eventId,
-                    calendarIntegrationId: this.integrationId
-                }
-            },
-            data: {
-                noteId: noteId
-            }
-        });
-    }
-
-    async unlinkNoteFromEvent(eventId: string): Promise<void> {
-        await prisma.calendarEvent.update({
-            where: {
-                externalId_calendarIntegrationId: {
-                    externalId: eventId,
-                    calendarIntegrationId: this.integrationId
-                }
-            },
-            data: {
-                noteId: null
-            }
-        });
-    }
-
     private getRandomTheme(): "blue" | "pink" | "purple" {
         const themes: ("blue" | "pink" | "purple")[] = ["blue", "pink", "purple"];
         return themes[Math.floor(Math.random() * themes.length)];

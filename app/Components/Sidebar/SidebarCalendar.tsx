@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight, Link2, Unlink } from "lucide-react"
+import { CalendarClientService } from '../../services/calendarClientService'
 import { 
     addDays, 
     addMonths,
@@ -62,7 +63,7 @@ function getEventStyle(theme: Event["theme"]) {
     }
 }
 
-const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
+const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: boolean; currentNoteId?: number; }) => {
     const { data: session } = useSession()
     const params = useParams()
     const today = startOfDay(new Date())
@@ -71,6 +72,26 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
     const [currentMonth, setCurrentMonth] = React.useState(format(today, "MMM-yyyy"))
     const [events, setEvents] = React.useState<Event[]>([])
     const firstDayCurrentMonth = startOfMonth(new Date(currentMonth))
+
+    const refreshEvents = async () => {
+        if (session?.user) {
+            const startOfDay = new Date(selectedDay);
+            startOfDay.setHours(0, 0, 0, 0);
+            
+            const endOfDay = new Date(selectedDay);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            try {
+                const response = await fetch(`/api/calendar/events?timeMin=${startOfDay.toISOString()}&timeMax=${endOfDay.toISOString()}`);
+                if (!response.ok) throw new Error('Failed to fetch events');
+                const fetchedEvents = await response.json();
+                setEvents(fetchedEvents);
+            } catch (error) {
+                console.error('Failed to fetch events:', error);
+                toast.error('Failed to load calendar events');
+            }
+        }
+    };
 
     // Remove calendarService state and initialization
     // Instead, fetch events directly from API
@@ -100,31 +121,12 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
 
     // Add event linking handlers
     // Updated link/unlink handlers
-    const handleLinkNote = async (eventId: string) => {
-        if (!params.slug) return;
-        
+    // Replace the handleLinkNote function with:
+    const handleLinkNote = async (eventId: string, noteId: number) => {
         try {
-            const response = await fetch('/api/calendar/link', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ noteId: Number(params.slug), eventId }),
-            });
-            
-            if (!response.ok) throw new Error('Failed to link note');
-            
+            await CalendarClientService.linkNoteToEvent(eventId, noteId);
             toast.success("Note linked to event");
-            // Refresh events
-            const startOfDay = new Date(selectedDay);
-            const endOfDay = new Date(selectedDay);
-            endOfDay.setHours(23, 59, 59, 999);
-            
-            const eventsResponse = await fetch(`/api/calendar/events?timeMin=${startOfDay.toISOString()}&timeMax=${endOfDay.toISOString()}`);
-            if (eventsResponse.ok) {
-                const updatedEvents = await eventsResponse.json();
-                setEvents(updatedEvents);
-            }
+            await refreshEvents();
         } catch (error) {
             console.error('Failed to link note:', error);
             toast.error("Failed to link note to event");
@@ -133,27 +135,9 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
 
     const handleUnlinkNote = async (eventId: string) => {
         try {
-            const response = await fetch(`/api/calendar/unlink`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ eventId }),
-            });
-            
-            if (!response.ok) throw new Error('Failed to unlink note');
-            
+            await CalendarClientService.unlinkNoteFromEvent(eventId);
             toast.success("Note unlinked from event");
-            // Refresh events
-            const startOfDay = new Date(selectedDay);
-            const endOfDay = new Date(selectedDay);
-            endOfDay.setHours(23, 59, 59, 999);
-            
-            const eventsResponse = await fetch(`/api/calendar/events?timeMin=${startOfDay.toISOString()}&timeMax=${endOfDay.toISOString()}`);
-            if (eventsResponse.ok) {
-                const updatedEvents = await eventsResponse.json();
-                setEvents(updatedEvents);
-            }
+            await refreshEvents();
         } catch (error) {
             console.error('Failed to unlink note:', error);
             toast.error("Failed to unlink note from event");
@@ -317,7 +301,13 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-6 w-6 p-0"
-                                                        onClick={() => event.noteId ? handleUnlinkNote(event.id) : handleLinkNote(event.id)}
+                                                        onClick={() => {
+                                                            if (event.noteId) {
+                                                                handleUnlinkNote(event.id);
+                                                            } else if (currentNoteId) {
+                                                                handleLinkNote(event.id, currentNoteId);
+                                                            }
+                                                        }}
                                                     >
                                                         {event.noteId ? (
                                                             <Unlink className="h-3 w-3" />
@@ -344,6 +334,7 @@ const SidebarCalendar = ({ resetState = false }: { resetState?: boolean }) => {
                     onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
                     position={contextMenu.position}
                     event={contextMenu.event}
+                    currentNoteId={currentNoteId} 
                     onLinkNote={handleLinkNote}
                     onUnlinkNote={handleUnlinkNote}
                 />
