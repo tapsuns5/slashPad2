@@ -1,5 +1,7 @@
 // New file for client-side API calls
 
+import toast from "react-hot-toast";
+
 // Custom event for linked events update
 export const LINKED_EVENTS_UPDATED = 'LINKED_EVENTS_UPDATED';
 
@@ -12,6 +14,13 @@ export class CalendarClientService {
       },
       body: JSON.stringify({ eventId, noteId, summary }),
     });
+
+    if (response.ok) {
+      toast.success("Meeting linked to Note", {
+        position: "bottom-center",
+        duration: 2000,
+      });
+    }
 
     if (!response.ok) {
       throw new Error('Failed to link note to event');
@@ -38,6 +47,11 @@ export class CalendarClientService {
     if (!response.ok) {
       throw new Error('Failed to unlink note from event');
     }
+
+    toast.success("Meeting unlinked from Note", {
+      position: "bottom-center",
+      duration: 2000,
+    });
 
     return response.json();
   }
