@@ -12,7 +12,8 @@
         --card-foreground: hsl(222 47% 11%);
         --popover: hsl(0 0% 100%);
         --popover-foreground: hsl(222 47% 11%);
-        --primary: hsl(221 83% 53%);
+        --primary: hsl(221, 87%, 44%);
+        --primary-hover: hsl(221, 89%, 31%);
         --primary-foreground: hsl(210 40% 98%);
         --secondary: hsl(210 40% 96%);
         --secondary-foreground: hsl(222 47% 11%);
@@ -138,6 +139,19 @@
         @apply list-decimal list-outside pl-8 my-4 space-y-1;
     }
 }
+
+/* Link styles */
+  a {
+    color: var(--primary);
+    cursor: pointer;
+    font-weight: 500;
+
+    &:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+      font-weight: 500;
+    }
+  }
 
 @layer base {
     /* Reset list styles for breadcrumbs */
