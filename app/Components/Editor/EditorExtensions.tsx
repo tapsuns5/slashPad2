@@ -51,8 +51,17 @@ const editorExtensions: AnyExtension[] = [
       class: 'editor-bullet-list',
     },
   }),
-  OrderedList,
-  ListItem,
+  OrderedList.configure({
+    keepMarks: true,
+    HTMLAttributes: {
+      class: 'editor-ordered-list',
+    },
+  }),
+  ListItem.configure({
+    HTMLAttributes: {
+      class: 'editor-list-item',
+    },
+  }),
   Link,
   tiptapimage,
   TextStyle,

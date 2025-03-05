@@ -83,6 +83,39 @@
     h4 {
         @apply text-xl font-bold mb-1;
     }
+
+    ol, .editor-ordered-list {
+        @apply list-decimal list-outside pl-8 my-4 space-y-1;
+    }
+
+    .editor-list-item {
+        @apply my-1;
+    }
+
+    /* First level */
+    ol, .editor-ordered-list {
+        counter-reset: item;
+    }
+
+    /* Second level */
+    ol ol, .editor-ordered-list .editor-ordered-list {
+        counter-reset: alpha;
+        list-style-type: lower-alpha;
+    }
+
+    /* Third level */
+    ol ol ol, .editor-ordered-list .editor-ordered-list .editor-ordered-list {
+        counter-reset: roman;
+        list-style-type: lower-roman;
+    }
+
+    ol ol {
+        @apply list-[lower-alpha] mt-2;
+    }
+
+    ol ol ol {
+        @apply list-[lower-roman];
+    }
 }
 
 @layer utilities {
