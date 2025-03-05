@@ -1,12 +1,12 @@
 // New file for client-side API calls
 export class CalendarClientService {
-  static async linkNoteToEvent(eventId: string, noteId: number): Promise<void> {
+  static async linkNoteToEvent(eventId: string, noteId: number, summary: string): Promise<void> {
     const response = await fetch('/api/calendar/link', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ eventId, noteId }),
+      body: JSON.stringify({ eventId, noteId, summary }),
     });
 
     if (!response.ok) {

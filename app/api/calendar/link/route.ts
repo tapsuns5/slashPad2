@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         console.log('Received request body:', body);
 
-        const { noteId, eventId } = body;
+        const { noteId, eventId, summary } = body;
 
         if (!noteId || !eventId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -40,13 +40,14 @@ export async function POST(request: Request) {
             create: {
                 externalId: eventId,
                 calendarIntegrationId: integration.id,
-                title: 'Linked Event', // Default title
-                startTime: new Date(), // Default to current time
-                endTime: new Date(),   // Default to current time
+                title: summary || 'Linked Event', // Use the summary from Google Calendar, fallback to 'Linked Event'
+                startTime: new Date(),
+                endTime: new Date(),
                 noteId: noteId
             },
             update: {
-                noteId: noteId
+                noteId: noteId,
+                title: summary || undefined // Update title if summary is provided
             }
         });
 

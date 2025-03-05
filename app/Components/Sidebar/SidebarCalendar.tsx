@@ -124,7 +124,8 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
     // Replace the handleLinkNote function with:
     const handleLinkNote = async (eventId: string, noteId: number) => {
         try {
-            await CalendarClientService.linkNoteToEvent(eventId, noteId);
+            const event = events.find(e => e.id === eventId);
+            await CalendarClientService.linkNoteToEvent(eventId, noteId, event?.title || 'Linked Event');
             toast.success("Note linked to event");
             await refreshEvents();
         } catch (error) {

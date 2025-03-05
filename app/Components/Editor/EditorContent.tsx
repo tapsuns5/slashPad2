@@ -646,6 +646,8 @@ const EditorContent: React.FC<EditorContentProps> = ({
     fetchBlockContent();
   }, [noteId]);
 
+  const [linkedEvents, setLinkedEvents] = useState<Array<{ id: string; title: string }>>([]);
+
   // Separate effect to set content when editor or initial content changes
   useEffect(() => {
     if (editor && initialContent) {
@@ -807,6 +809,24 @@ const EditorContent: React.FC<EditorContentProps> = ({
 
     console.log('Tags effect triggered with noteId:', noteId);
     fetchNoteTags();
+  }, [noteId]);
+
+  useEffect(() => {
+    const fetchLinkedEvents = async () => {
+      if (!noteId) return;
+
+      try {
+        const response = await fetch(`/api/calendar/linked-events?noteId=${noteId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch linked events');
+        }
+        const events = await response.json();
+        setLinkedEvents(events);
+      } catch (error) {
+        console.error('Error fetching linked events:', error);
+      }
+    };
+    fetchLinkedEvents();
   }, [noteId]);
 
   const handleTitleClick = () => {
@@ -1076,8 +1096,23 @@ const EditorContent: React.FC<EditorContentProps> = ({
             </div>
           </div>
         </div>
-        <div className=" pl-[3.6rem] text-gray-600 text-xs -mt-1">Meeting:
-          <Badge variant="outline" className="ml-5 mt-3">Meeting</Badge>
+        <div className="pl-[3.6rem] text-gray-600 text-xs mt-2">
+          {linkedEvents.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span>Linked Events:</span>
+              <div className="flex gap-2">
+                {linkedEvents.map(event => (
+                  <Badge
+                    key={event.id}
+                    variant="outline"
+                    className="text-xs py-1 px-2"
+                  >
+                    {event.title}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <TipTapContent 
