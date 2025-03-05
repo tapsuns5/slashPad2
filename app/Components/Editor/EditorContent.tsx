@@ -20,6 +20,7 @@ import { initializeClipboardCopy } from "@/app/utils/clipboardCopy";
 import editorExtensions from "./EditorExtensions";
 import { v4 as uuidv4 } from 'uuid';
 import MultipleSelector from "@/components/ui/multiselect";
+import { LINKED_EVENTS_UPDATED } from '@/app/services/calendarClientService';
 
 // Define types for node attributes and details
 type NodeAttributes = {
@@ -826,7 +827,21 @@ const EditorContent: React.FC<EditorContentProps> = ({
         console.error('Error fetching linked events:', error);
       }
     };
+
     fetchLinkedEvents();
+
+    // Add event listener for linked events updates
+    const handleLinkedEventsUpdate = (event: CustomEvent) => {
+      if (event.detail.noteId === noteId) {
+        fetchLinkedEvents();
+      }
+    };
+
+    window.addEventListener(LINKED_EVENTS_UPDATED, handleLinkedEventsUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener(LINKED_EVENTS_UPDATED, handleLinkedEventsUpdate as EventListener);
+    };
   }, [noteId]);
 
   const handleTitleClick = () => {
