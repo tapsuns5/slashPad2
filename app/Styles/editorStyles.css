@@ -116,6 +116,27 @@
     ol ol ol {
         @apply list-[lower-roman];
     }
+
+    /* Unordered List Styles */
+    ul, .editor-bullet-list {
+        @apply list-disc list-outside pl-8 my-4 space-y-1;
+    }
+
+    /* Second level - circle bullets */
+    ul ul, .editor-bullet-list .editor-bullet-list {
+        list-style-type: circle;
+        @apply mt-2;
+    }
+
+    /* Third level - square bullets */
+    ul ul ul, .editor-bullet-list .editor-bullet-list .editor-bullet-list {
+        list-style-type: square;
+    }
+
+    /* Ordered List Styles */
+    ol, .editor-ordered-list {
+        @apply list-decimal list-outside pl-8 my-4 space-y-1;
+    }
 }
 
 @layer utilities {
@@ -548,7 +569,7 @@
     opacity: 10;
     transition: opacity ease-in 0.3s;
     border-radius: 0.25rem;
-    background-image: url("data:image/svg+xml,%3csvg stroke-width='2' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' stroke='%23B1B0AF' fill='none' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3e%3ccircle cx='7' cy='4' r='1'/%3e%3ccircle cx='7' cy='11' r='1'/%3e%3ccircle cx='7' cy='18' r='1'/%3e%3ccircle cx='15' cy='4' r='1'/%3e%3ccircle cx='15' cy='11' r='1'/%3e%3ccircle cx='15' cy='18' r='1'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg stroke-width='2' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='none' stroke='%23B1B0AF' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3e%3ccircle cx='7' cy='4' r='1'/%3e%3ccircle cx='7' cy='11' r='1'/%3e%3ccircle cx='7' cy='18' r='1'/%3e%3ccircle cx='15' cy='4' r='1'/%3e%3ccircle cx='15' cy='11' r='1'/%3e%3ccircle cx='15' cy='18' r='1'/%3e%3c/svg%3e");
     background-size: calc(0.6em + 0.4rem) calc(0.6em + 0.4rem);
     background-repeat: no-repeat;
     background-position: center;
@@ -878,17 +899,6 @@ th {
 
 .details summary::-webkit-details-marker {
     display: none;
-}
-
-/* Bullet List */
-.editor-bullet-list {
-    list-style-type: disc;
-    padding-left: 1.5rem;
-    margin: 1rem 0;
-}
-
-.editor-bullet-list li {
-    margin-bottom: 0.5rem;
 }
 
 .custom-drag-handle {
