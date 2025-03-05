@@ -139,6 +139,21 @@
     }
 }
 
+@layer base {
+    /* Reset list styles for breadcrumbs */
+    .breadcrumb-list,
+    .breadcrumb-list ol,
+    nav[aria-label="breadcrumb"] ol {
+        list-style: none !important;
+        @apply p-0 m-0;
+    }
+
+    /* Ordered List Styles */
+    ol, .editor-ordered-list {
+        @apply list-decimal list-outside pl-8 my-4 space-y-1;
+    }
+}
+
 @layer utilities {
     .border-border {
         border-color: var(--border);
