@@ -100,17 +100,17 @@ export const Sidebar = ({
                 isOpen ? "translate-x-0" : "-translate-x-full"
               }`}
             >
-              <div className="sticky top-0 z-10 border-b bg-[#f8f8f7]">
-                <div className="flex items-center justify-between p-2">
+              <div className="sticky top-0 z-10 border-b bg-[#f8f8f7] mb-0">
+                <div className="flex items-center justify-between mr-2 ml-4 -mt-2">
                   <Image 
                     src="/slashPad.svg" 
                     alt="SlashPad Logo" 
-                    width={100} 
-                    height={40} 
+                    width={90} 
+                    height={30} 
                     className="object-contain"
                   />
                   <div className="flex items-center gap-1">
-                    <button onClick={toggleSidebar} className="p-2 ml-2">
+                <button onClick={toggleSidebar} className="p-2 ml-2">
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -143,7 +143,7 @@ export const Sidebar = ({
               </div>
             </div>
             
-            <nav className="space-y-0.5 p-2">
+              <nav className="space-y-0.5 p-2 -mt-3">
                 {navItems.map((item) => (
                     <a
                         key={item.title}

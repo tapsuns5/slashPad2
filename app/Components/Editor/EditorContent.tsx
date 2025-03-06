@@ -1120,9 +1120,38 @@ const EditorContent: React.FC<EditorContentProps> = ({
                   <Badge
                     key={event.id}
                     variant="outline"
-                    className="text-xs py-1 px-2"
+                    className="text-xs py-1 px-2 flex items-center gap-1 group relative"
                   >
                     {event.title}
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        try {
+                          const response = await fetch('/api/calendar/unlink', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              eventId: event.id,
+                              noteId: noteId
+                            }),
+                          });
+
+                          if (!response.ok) {
+                            throw new Error('Failed to unlink event');
+                          }
+
+                          // Update the local state to remove the unlinked event
+                          setLinkedEvents(prev => prev.filter(e => e.id !== event.id));
+                        } catch (error) {
+                          console.error('Error unlinking event:', error);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 ml-1 hover:text-red-500 transition-opacity"
+                    >
+                      ×
+                    </button>
                   </Badge>
                 ))}
               </div>

@@ -32,19 +32,52 @@ import { PlaceholderNode } from './extensions/PlaceholderNode'
 import { getHierarchicalIndexes, TableOfContents } from '@tiptap-pro/extension-table-of-contents'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import FileHandler from '@tiptap-pro/extension-file-handler'
+import CodeBlock from '@tiptap/extension-code-block'
 
+// Custom Extenion
+const CustomCodeBlock = CodeBlock.extend({
+  addKeyboardShortcuts() {
+    let lastEnterPress = 0;
+
+    return {
+      Enter: ({ editor }) => {
+        if (!editor.isActive('codeBlock')) return false
+
+        const now = Date.now();
+        const isDoubleEnter = (now - lastEnterPress) < 500;
+        lastEnterPress = now;
+
+        const { empty, $anchor } = editor.state.selection
+        const isLastLine = $anchor.pos === $anchor.end()
+
+        if (empty && isDoubleEnter && isLastLine) {
+          editor.chain()
+            .insertContent({ type: 'paragraph' })
+            .createParagraphNear()
+            .focus()
+            .run()
+          return true
+        }
+
+        return false
+      },
+    }
+  },
+})
 
 const editorExtensions: AnyExtension[] = [
   StarterKit.configure({
     bulletList: false,
     orderedList: false,
     listItem: false,
+    codeBlock: false,
   }),
   Document,
   Paragraph,
   Text,
   HardBreak,
   HorizontalRule,
+  CustomCodeBlock,
   Blockquote.configure({
     HTMLAttributes: {
       class: 'blockquote',
