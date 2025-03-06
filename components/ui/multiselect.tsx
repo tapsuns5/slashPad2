@@ -475,15 +475,15 @@ const MultipleSelector = React.forwardRef<
                 <div
                   key={option.value}
                   className={cn(
-                    "animate-fadeIn relative inline-flex h-7 cursor-default items-center rounded-md border border-solid bg-background pe-7 pl-2 ps-2 text-xs font-medium text-secondary-foreground transition-all hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 data-[fixed]:pe-2",
+                    "group relative inline-flex h-7 cursor-default items-center justify-center rounded-md border border-solid border-[#e2e7ee] px-2 text-xs py-1 text-secondary-foreground transition-all hover:bg-background disabled:cursor-not-allowed disabled:opacity-50 data-[fixed]:pe-2",
                     badgeClassName,
                   )}
                   data-fixed={option.fixed}
                   data-disabled={disabled || undefined}
                 >
-                  {option.label}
+                  <span className="px-1">{option.label}</span>
                   <button
-                    className="absolute -inset-y-px -end-px flex size-7 items-center justify-center rounded-e-lg border border-transparent p-0 text-muted-foreground/80 outline-0 transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
+                    className="opacity-0 group-hover:opacity-100 absolute -right-1 -top-1 rounded-full bg-white hover:text-red-500 transition-opacity"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         handleUnselect(option)
@@ -497,8 +497,8 @@ const MultipleSelector = React.forwardRef<
                     aria-label="Remove"
                   >
                     <Cross2Icon
-                      width={14}
-                      height={14}
+                      width={12}
+                      height={12}
                       strokeWidth={2}
                       aria-hidden="true"
                     />
@@ -544,29 +544,7 @@ const MultipleSelector = React.forwardRef<
                 inputProps?.className,
               )}
             />
-            <button
-              type="button"
-              onClick={() => {
-                setSelected(selected.filter((s) => s.fixed))
-                onChange?.(selected.filter((s) => s.fixed))
-              }}
-              className={cn(
-                "absolute end-0 top-0 flex size-9 items-center justify-center rounded-lg border border-transparent text-muted-foreground/80 transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
-                (hideClearAllButton ||
-                  disabled ||
-                  selected.length < 1 ||
-                  selected.filter((s) => s.fixed).length === selected.length) &&
-                  "hidden",
-              )}
-              aria-label="Clear all"
-            >
-              <Cross2Icon
-                width={16}
-                height={16}
-                strokeWidth={2}
-                aria-hidden="true"
-              />
-            </button>
+            
           </div>
         </div>
         <div className="relative">

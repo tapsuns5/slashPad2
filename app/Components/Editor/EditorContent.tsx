@@ -12,6 +12,7 @@ import {
   Tag as TagIcon,
   Share as ShareIcon,
 } from "lucide-react";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import { COMMANDS } from "./CommandMenu";
 import BubbleMenuComponent from './BubbleMenu';
 import CommandMenu, { executeCommand } from './CommandMenu';
@@ -981,7 +982,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
                   // Fetch all user's tags
                   const tagsResponse = await fetch('/api/tags');
                   const userTags = await tagsResponse.json();
-                  
+
                   // Define the type for tags from the API
                   interface TagFromAPI {
                     id: string;
@@ -989,17 +990,17 @@ const EditorContent: React.FC<EditorContentProps> = ({
                     userId: string;
                     createdAt: string;
                   }
-                  
+
                   // Filter tags based on search term
                   const filteredTags: { label: string; value: string }[] = userTags
                     .map((tag: TagFromAPI) => ({
                       value: tag.name,
                       label: tag.name
                     }))
-                    .filter((tag: { label: string; value: string }) => 
+                    .filter((tag: { label: string; value: string }) =>
                       tag.label.toLowerCase().includes(searchTerm.toLowerCase())
                     );
-                  
+
                   // If search term doesn't match any existing tags, add option to create it
                   if (searchTerm && !filteredTags.some((tag: { label: string; value: string }) => tag.label.toLowerCase() === searchTerm.toLowerCase())) {
                     const createTag = {
@@ -1011,7 +1012,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
                       filteredTags.push(createTag);
                     }
                   }
-                  
+
                   return filteredTags;
                 }}
                 className="min-w-[200px] border-none"
@@ -1026,12 +1027,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
                   const newTags = newOptions.map(opt => opt.value);
                   const removedTags = tags.filter(tag => !newTags.includes(tag));
                   const addedTags = newTags.filter(tag => !tags.includes(tag));
-                  
-                  console.log('Handling tags:', { 
+
+                  console.log('Handling tags:', {
                     noteId,
                     removedTags,
                     addedTags,
-                    currentTags: tags 
+                    currentTags: tags
                   });
 
                   // Handle removed tags
@@ -1120,9 +1121,9 @@ const EditorContent: React.FC<EditorContentProps> = ({
                   <Badge
                     key={event.id}
                     variant="outline"
-                    className="text-xs py-1 px-2 flex items-center gap-1 group relative"
+                    className="text-xs py-1 px-2 flex items-center justify-center gap-1 group relative"
                   >
-                    {event.title}
+                    <span className="px-1">{event.title}</span>
                     <button
                       onClick={async (e) => {
                         e.preventDefault();
@@ -1148,9 +1149,14 @@ const EditorContent: React.FC<EditorContentProps> = ({
                           console.error('Error unlinking event:', error);
                         }
                       }}
-                      className="opacity-0 group-hover:opacity-100 ml-1 hover:text-red-500 transition-opacity"
+                      className="opacity-0 group-hover:opacity-100 absolute -right-1 -top-1 rounded-full bg-white hover:text-red-500 transition-opacity"
                     >
-                      ×
+                      <Cross2Icon
+                        width={12}
+                        height={12}
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
                     </button>
                   </Badge>
                 ))}
