@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { CommandList, Command } from "./CommandList";
-import { Heading1, Heading2, Heading3, List, ListOrdered, TextQuote, Code, ImageIcon, Pilcrow, ListTodo, Table, ListCollapse } from "lucide-react";
+import { Heading1, Heading2, Heading3, List, ListOrdered, TextQuote, Code, ImageIcon, Pilcrow, ListTodo, Table, ListCollapse, Minus } from "lucide-react";
 import { Editor } from "@tiptap/react";
 
 export const COMMANDS: Command[] = [
@@ -29,6 +29,8 @@ export const COMMANDS: Command[] = [
   { id: "task", label: "Task", icon: <ListTodo strokeWidth={1} />, shortcut: "- " },
   { id: "table", label: "Table", icon: <Table strokeWidth={1} />, shortcut: "||" },
   { id: "details", label: "Details", icon: <ListCollapse strokeWidth={1} />, shortcut: ">" },
+  { id: "div", label: "Divider", icon: <Minus strokeWidth={1} />, shortcut: "---" }
+  
   
 ];
 
@@ -112,6 +114,9 @@ export const executeCommand = (command: Command, editor: Editor) => {
         break;
       case "paragraph":
         chain.setParagraph().run();
+        break;
+      case "div":
+        chain.focus().setHorizontalRule().run()
         break;
       default:
         console.log("Unknown command:", command.id);
