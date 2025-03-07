@@ -91,7 +91,7 @@ const PageContent = () => {
                                     </button>
                                 </div>
                             )}
-                            <div className="flex-1 px-8 mb-8 relative flex items-center justify-between">
+                            <div className="flex-1 px-8 mb-10git  relative flex items-center justify-between">
                                 <div>
                                     <Breadcrumb>
                                         <BreadcrumbList>

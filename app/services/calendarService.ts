@@ -2,8 +2,8 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { calendar_v3 } from 'googleapis';
 import { prisma } from '@/lib/prisma';
-import { CalendarProvider } from '@prisma/client';
 import { format } from 'date-fns';
+import { CalendarIntegration } from '@prisma/client';
 
 export interface CalendarEvent {
     id: string;
@@ -16,6 +16,16 @@ export interface CalendarEvent {
     end: Date;
     noteId?: number;
     isAllDay: boolean;
+}
+
+// Add interface for OAuth error response
+interface OAuthErrorResponse {
+    code?: string;
+    message: string;
+    response?: {
+        status?: number;
+        data?: unknown;
+    };
 }
 
 export class CalendarService {
@@ -43,7 +53,7 @@ export class CalendarService {
         this.integrationId = credentials.integration_id;
     }
 
-    private async refreshTokenIfNeeded(integration: any) {
+    private async refreshTokenIfNeeded(integration: CalendarIntegration) {
         try {
             // Get a fresh copy of the integration from the database
             const freshIntegration = await prisma.calendarIntegration.findUnique({
@@ -90,12 +100,14 @@ export class CalendarService {
             });
             
             return tokens.access_token;
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const err = error as OAuthErrorResponse;
+            
             console.error("Token refresh failed:", {
-                message: error?.message,
-                code: error?.code,
-                status: error?.response?.status,
-                details: error?.response?.data
+                message: err.message,
+                code: err.code,
+                status: err.response?.status,
+                details: err.response?.data
             });
             throw error;
         }

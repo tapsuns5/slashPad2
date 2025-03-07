@@ -100,6 +100,54 @@ function getEventTopPosition(time: string, isAllDay: boolean): number {
     return (hours * 60 + minutes) * (48/60);
 }
 
+// Add these helper functions for handling overlapping events
+function getEventTiming(event: Event) {
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    return {
+        start: start.getTime(),
+        end: end.getTime()
+    };
+}
+
+function eventsOverlap(event1: Event, event2: Event) {
+    const timing1 = getEventTiming(event1);
+    const timing2 = getEventTiming(event2);
+    return timing1.start < timing2.end && timing2.start < timing1.end;
+}
+
+function groupOverlappingEvents(events: Event[]): Event[][] {
+    const groups: Event[][] = [];
+    
+    events.forEach(event => {
+        // Find a group where this event overlaps with any event
+        const overlappingGroup = groups.find(group => 
+            group.some(groupEvent => eventsOverlap(event, groupEvent))
+        );
+        
+        if (overlappingGroup) {
+            overlappingGroup.push(event);
+        } else {
+            groups.push([event]);
+        }
+    });
+    
+    // Sort events within each group by start time
+    groups.forEach(group => {
+        group.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    });
+    
+    return groups;
+}
+
+function calculateEventPosition(event: Event, group: Event[]): { width: string, left: string } {
+    const position = group.indexOf(event);
+    const total = group.length;
+    const width = `${100 / total}%`;
+    const left = `${(position * 100) / total}%`;
+    return { width, left };
+}
+
 const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: boolean; currentNoteId?: number; }) => {
     const { data: session } = useSession()
     const today = startOfDay(new Date())
@@ -425,71 +473,77 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
                             </div>
                         )}
                         
-                        {/* Existing events rendering */}
-                        {timedEvents.map((event) => {
-                            if (event.isAllDay) return null; // Skip all-day events in time slots
-                            
-                            const style = getEventStyle(event.theme)
-                            // Parse the event start time
-                            const eventTime = new Date(event.start);
-                            const formattedTime = formatEventTime(eventTime);
-                            
-                            return (
-                                <div
-                                    key={event.id}
-                                    className={cn("rounded-md p-2 relative group", style.background)}
-                                    style={{
-                                        position: 'absolute',
-                                        top: `${getEventTopPosition(formattedTime, event.isAllDay)}px`,
-                                        height: `${event.durationHours * 48}px`,
-                                        width: 'calc(100% - 8px)'
-                                    }}
-                                    onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        setContextMenu({
-                                            isOpen: true,
-                                            position: { x: e.clientX, y: e.clientY },
-                                            event: event,
-                                        });
-                                    }}
-                                >
-                                    <p className={cn("text-[10px] font-medium", style.text)}>{event.time}</p>
-                                    <p className="mt-0.5 text-xs font-semibold text-foreground">{event.title}</p>
-                                    {event.location && (
-                                        <p className={cn("mt-0.5 text-[10px] leading-tight", style.text)}>{event.location}</p>
-                                    )}
-                                    <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-6 w-6 p-0"
-                                                        onClick={() => {
-                                                            if (event.noteId) {
-                                                                handleUnlinkNote(event.id);
-                                                            } else if (currentNoteId) {
-                                                                handleLinkNote(event.id, currentNoteId);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {event.noteId ? (
-                                                            <Unlink className="h-3 w-3" />
-                                                        ) : (
-                                                            <Link2 className="h-3 w-3" />
-                                                        )}
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>{event.noteId ? "Unlink note" : "Link to current note"}</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    </div>
-                                </div>
-                            )
-                        })}
+                        {/* Group overlapping events */}
+                        {groupOverlappingEvents(timedEvents).map((group, groupIndex) => (
+                            <React.Fragment key={groupIndex}>
+                                {group.map((event) => {
+                                    if (event.isAllDay) return null;
+                                    
+                                    const style = getEventStyle(event.theme);
+                                    const eventTime = new Date(event.start);
+                                    const formattedTime = formatEventTime(eventTime);
+                                    const { width, left } = calculateEventPosition(event, group);
+                                    
+                                    return (
+                                        <div
+                                            key={event.id}
+                                            className={cn("rounded-md p-2 relative group", style.background)}
+                                            style={{
+                                                position: 'absolute',
+                                                top: `${getEventTopPosition(formattedTime, event.isAllDay)}px`,
+                                                height: `${event.durationHours * 48}px`,
+                                                width,
+                                                left,
+                                                zIndex: 1
+                                            }}
+                                            onContextMenu={(e) => {
+                                                e.preventDefault();
+                                                setContextMenu({
+                                                    isOpen: true,
+                                                    position: { x: e.clientX, y: e.clientY },
+                                                    event: event,
+                                                });
+                                            }}
+                                        >
+                                            <p className={cn("text-[10px] font-medium truncate", style.text)}>{event.time}</p>
+                                            <p className="mt-0.5 text-xs font-semibold text-foreground truncate">{event.title}</p>
+                                            {event.location && (
+                                                <p className={cn("mt-0.5 text-[10px] leading-tight truncate", style.text)}>{event.location}</p>
+                                            )}
+                                            <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-5 w-5 p-0"
+                                                                onClick={() => {
+                                                                    if (event.noteId) {
+                                                                        handleUnlinkNote(event.id);
+                                                                    } else if (currentNoteId) {
+                                                                        handleLinkNote(event.id, currentNoteId);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {event.noteId ? (
+                                                                    <Unlink className="h-3 w-3" />
+                                                                ) : (
+                                                                    <Link2 className="h-3 w-3" />
+                                                                )}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{event.noteId ? "Unlink note" : "Link to current note"}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </React.Fragment>
+                        ))}
                     </div>
                 </div>
             </div>
