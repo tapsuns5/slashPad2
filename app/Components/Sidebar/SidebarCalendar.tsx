@@ -14,12 +14,11 @@ import {
     startOfDay 
 } from "date-fns"
 import { useSession } from "next-auth/react"
-import { useParams } from "next/navigation"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { CalendarService, CalendarEvent } from '../../services/calendarService'
+import { CalendarEvent } from '../../services/calendarService'
 import {
     Tooltip,
     TooltipContent,
@@ -29,7 +28,9 @@ import {
 import CalendarEventActions from './CalendarEventActions'
 
 // Update the Event type to match CalendarEvent
-type Event = CalendarEvent;
+type Event = CalendarEvent & {
+    isAllDay?: boolean;
+};
 
 // Add this before the SidebarCalendar component
 const timeSlots = Array.from({ length: 24 }, (_, i) => {
@@ -63,9 +64,44 @@ function getEventStyle(theme: Event["theme"]) {
     }
 }
 
+// Add these helper functions before the SidebarCalendar component
+function parseEventTime(timeStr: string): { hours: number; minutes: number } {
+    const [time, period] = timeStr.split(/\s+(AM|PM)/i);
+    const [hours, minutes = '0'] = time.split(':');
+    let parsedHours = parseInt(hours);
+    
+    // Convert to 24-hour format if PM
+    if (period?.toUpperCase() === 'PM' && parsedHours !== 12) {
+        parsedHours += 12;
+    }
+    // Handle 12 AM (midnight)
+    else if (period?.toUpperCase() === 'AM' && parsedHours === 12) {
+        parsedHours = 0;
+    }
+    
+    return {
+        hours: parsedHours,
+        minutes: parseInt(minutes)
+    };
+}
+
+function formatEventTime(date: Date): string {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
+function getEventTopPosition(time: string, isAllDay: boolean): number {
+    if (isAllDay) return 0;
+    const { hours, minutes } = parseEventTime(time);
+    // Each hour is 48px tall, so calculate position based on hours and minutes
+    return (hours * 60 + minutes) * (48/60);
+}
+
 const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: boolean; currentNoteId?: number; }) => {
     const { data: session } = useSession()
-    const params = useParams()
     const today = startOfDay(new Date())
     const [selectedDay, setSelectedDay] = React.useState(today)
     const [activeDay, setActiveDay] = React.useState(today)
@@ -226,6 +262,18 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
         }
     }, [selectedDay, currentTime]);
 
+    // Add function to separate all-day and timed events
+    const { allDayEvents, timedEvents } = React.useMemo(() => {
+        return events.reduce((acc, event) => {
+            if (event.isAllDay) {
+                acc.allDayEvents.push(event);
+            } else {
+                acc.timedEvents.push(event);
+            }
+            return acc;
+        }, { allDayEvents: [] as Event[], timedEvents: [] as Event[] });
+    }, [events]);
+
     return (
         <div className="flex flex-col px-2 py-1">
             <div className="flex items-center justify-between">
@@ -289,9 +337,73 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
                 <h2 className="mb-2 text-xs font-semibold text-foreground mt-2">
                     Schedule for {format(selectedDay, "MMM dd, yyy")}
                 </h2>
+                
+                {/* All-day events section - Make it more compact */}
+                {allDayEvents.length > 0 && (
+                    <div className="mb-2">
+                        <h3 className="text-[10px] font-medium text-muted-foreground mb-1">All-day</h3>
+                        <div className="space-y-0.5">
+                            {allDayEvents.map((event) => {
+                                const style = getEventStyle(event.theme);
+                                return (
+                                    <div
+                                        key={event.id}
+                                        className={cn("rounded-md py-1 px-2 relative group", style.background)}
+                                        onContextMenu={(e) => {
+                                            e.preventDefault();
+                                            setContextMenu({
+                                                isOpen: true,
+                                                position: { x: e.clientX, y: e.clientY },
+                                                event: event,
+                                            });
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs font-semibold text-foreground truncate pr-6">{event.title}</p>
+                                            <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-5 w-5 p-0"
+                                                                onClick={() => {
+                                                                    if (event.noteId) {
+                                                                        handleUnlinkNote(event.id);
+                                                                    } else if (currentNoteId) {
+                                                                        handleLinkNote(event.id, currentNoteId);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {event.noteId ? (
+                                                                    <Unlink className="h-3 w-3" />
+                                                                ) : (
+                                                                    <Link2 className="h-3 w-3" />
+                                                                )}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>{event.noteId ? "Unlink note" : "Link to current note"}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </div>
+                                        </div>
+                                        {event.location && (
+                                            <p className={cn("text-[10px] leading-tight truncate", style.text)}>{event.location}</p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Time-based events section - Ensure full day scrolling */}
                 <div 
                     ref={scrollContainerRef}
-                    className="relative h-[600px] overflow-y-auto"
+                    className="relative h-[calc(100vh-22rem)] overflow-y-auto border-t border-border mt-2"
                 >
                     <div className="absolute left-0 top-0 w-8 space-y-[35px] text-[10px] text-muted-foreground">
                         {timeSlots.map((time) => (
@@ -300,8 +412,8 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
                             </div>
                         ))}
                     </div>
-                    <div className="ml-10 space-y-1 relative">
-                        {/* Add current time indicator */}
+                    <div className="ml-10 space-y-1 relative pb-4" style={{ height: '1152px' }}> {/* Fixed height for 24 hours */}
+                        {/* Current time indicator */}
                         {isEqual(selectedDay, startOfDay(currentTime)) && (
                             <div 
                                 className="absolute w-full h-[2px] bg-red-500 z-10"
@@ -314,15 +426,21 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
                         )}
                         
                         {/* Existing events rendering */}
-                        {events.map((event) => {
+                        {timedEvents.map((event) => {
+                            if (event.isAllDay) return null; // Skip all-day events in time slots
+                            
                             const style = getEventStyle(event.theme)
+                            // Parse the event start time
+                            const eventTime = new Date(event.start);
+                            const formattedTime = formatEventTime(eventTime);
+                            
                             return (
                                 <div
                                     key={event.id}
                                     className={cn("rounded-md p-2 relative group", style.background)}
                                     style={{
                                         position: 'absolute',
-                                        top: `${getEventTopPosition(event.time)}px`,
+                                        top: `${getEventTopPosition(formattedTime, event.isAllDay)}px`,
                                         height: `${event.durationHours * 48}px`,
                                         width: 'calc(100% - 8px)'
                                     }}
@@ -388,12 +506,6 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
             )}
         </div>
     )
-}
-
-// Add this helper function before the SidebarCalendar component
-function getEventTopPosition(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
-    return (hours * 60 + (minutes || 0)) * (48/60);
 }
 
 export { SidebarCalendar }

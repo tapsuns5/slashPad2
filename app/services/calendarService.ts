@@ -3,7 +3,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { calendar_v3 } from 'googleapis';
 import { prisma } from '@/lib/prisma';
 import { CalendarProvider } from '@prisma/client';
-
+import { format } from 'date-fns';
 
 export interface CalendarEvent {
     id: string;
@@ -15,6 +15,7 @@ export interface CalendarEvent {
     start: Date;
     end: Date;
     noteId?: number;
+    isAllDay: boolean;
 }
 
 export class CalendarService {
@@ -129,27 +130,27 @@ export class CalendarService {
                 orderBy: 'startTime',
             });
 
-            if (!response.data.items) return [];
-
-            // Directly map Google Calendar events to our interface without database sync
-            const events = response.data.items.map((event) => {
-                const startDateTime = event.start?.dateTime || event.start?.date || '';
-                const endDateTime = event.end?.dateTime || event.end?.date || '';
+            return (response.data.items || []).map(event => {
+                // Check for all-day event by looking for date without time
+                const isAllDay = Boolean(event.start?.date && !event.start?.dateTime);
+                const start = event.start?.dateTime || event.start?.date;
+                const end = event.end?.dateTime || event.end?.date;
+                
+                if (!start) return null;
                 
                 return {
                     id: event.id || '',
                     title: event.summary || 'Untitled Event',
-                    time: new Date(startDateTime).toLocaleTimeString(),
-                    location: event.location || undefined,
+                    time: isAllDay ? 'All day' : format(new Date(start), 'h:mm a'),
+                    location: event.location,
                     theme: this.getRandomTheme(),
-                    durationHours: this.calculateDuration(startDateTime, endDateTime),
-                    start: new Date(startDateTime),
-                    end: new Date(endDateTime),
-                    noteId: undefined
+                    durationHours: this.calculateDuration(start, end),
+                    start: new Date(start),
+                    end: new Date(end || start),
+                    noteId: undefined,
+                    isAllDay
                 };
-            });
-
-            return events;
+            }).filter(Boolean) as CalendarEvent[];
         } catch (error) {
             console.error('Error fetching calendar events:', error);
             throw error;
