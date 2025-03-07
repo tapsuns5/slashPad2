@@ -198,6 +198,34 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
         };
     }, [contextMenu.isOpen]);
 
+    // Add new state for tracking current time
+    const [currentTime, setCurrentTime] = React.useState(new Date());
+    
+    // Add a ref for the scrollable container
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+    // Add useEffect for updating current time
+    React.useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000); // Update every minute
+
+        return () => clearInterval(timer);
+    }, []);
+    
+    // Add useEffect to scroll to current time on initial render and when selected day changes
+    React.useEffect(() => {
+        if (scrollContainerRef.current && isEqual(selectedDay, startOfDay(currentTime))) {
+            // Calculate scroll position to show previous hour at the top
+            const currentHour = currentTime.getHours();
+            const previousHour = currentHour > 0 ? currentHour - 2 : 0;
+            const scrollPosition = previousHour * 48; // 48px per hour
+            
+            // Scroll to position
+            scrollContainerRef.current.scrollTop = scrollPosition;
+        }
+    }, [selectedDay, currentTime]);
+
     return (
         <div className="flex flex-col px-2 py-1">
             <div className="flex items-center justify-between">
@@ -261,15 +289,31 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
                 <h2 className="mb-2 text-xs font-semibold text-foreground mt-2">
                     Schedule for {format(selectedDay, "MMM dd, yyy")}
                 </h2>
-                <div className="relative">
+                <div 
+                    ref={scrollContainerRef}
+                    className="relative h-[600px] overflow-y-auto"
+                >
                     <div className="absolute left-0 top-0 w-8 space-y-[35px] text-[10px] text-muted-foreground">
-                        {timeSlots.slice(6, 12).map((time) => (
+                        {timeSlots.map((time) => (
                             <div key={time} className="relative h-3">
                                 {time}
                             </div>
                         ))}
                     </div>
-                    <div className="ml-10 space-y-1">
+                    <div className="ml-10 space-y-1 relative">
+                        {/* Add current time indicator */}
+                        {isEqual(selectedDay, startOfDay(currentTime)) && (
+                            <div 
+                                className="absolute w-full h-[2px] bg-red-500 z-10"
+                                style={{
+                                    top: `${(currentTime.getHours() * 60 + currentTime.getMinutes()) * (48/60)}px`
+                                }}
+                            >
+                                <div className="absolute -left-2 -top-1 w-2 h-2 rounded-full bg-red-500" />
+                            </div>
+                        )}
+                        
+                        {/* Existing events rendering */}
                         {events.map((event) => {
                             const style = getEventStyle(event.theme)
                             return (
@@ -277,8 +321,10 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
                                     key={event.id}
                                     className={cn("rounded-md p-2 relative group", style.background)}
                                     style={{
-                                        marginTop: `${event.time.includes("6:00") ? "0" : "0.75rem"}`,
-                                        height: `${event.durationHours * 3}rem`,
+                                        position: 'absolute',
+                                        top: `${getEventTopPosition(event.time)}px`,
+                                        height: `${event.durationHours * 48}px`,
+                                        width: 'calc(100% - 8px)'
                                     }}
                                     onContextMenu={(e) => {
                                         e.preventDefault();
@@ -342,6 +388,12 @@ const SidebarCalendar = ({ resetState = false, currentNoteId }: { resetState?: b
             )}
         </div>
     )
+}
+
+// Add this helper function before the SidebarCalendar component
+function getEventTopPosition(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return (hours * 60 + (minutes || 0)) * (48/60);
 }
 
 export { SidebarCalendar }
