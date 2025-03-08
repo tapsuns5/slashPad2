@@ -130,3 +130,73 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Add this at the end of the file */
+button svg,
+.nav-user,
+.nav-user * {
+  transform: none !important;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+/* Target the NavUser component specifically */
+.mt-auto.border-t > *,
+.mt-auto.border-t > * > *,
+.mt-auto.border-t button,
+.mt-auto.border-t svg {
+  transform: none !important;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out !important;
+  animation: none !important;
+}
+
+/* Disable any animations that might cause bouncing */
+@media (prefers-reduced-motion: no-preference) {
+  button:hover svg,
+  button:active svg,
+  button:focus svg {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+/* Specifically target the PanelRight icon and its container */
+[class*="PanelRight"],
+[class*="PanelRight"] *,
+button:has([class*="PanelRight"]) {
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Add these targeted rules at the end of the file */
+.no-bounce-container,
+.no-bounce-button,
+.no-bounce-icon {
+  transform: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+.no-bounce-button {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: color 0.2s ease-in-out !important;
+}
+
+.no-bounce-button:focus,
+.no-bounce-button:active,
+.no-bounce-button:hover {
+  transform: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.no-bounce-icon {
+  pointer-events: none !important;
+}

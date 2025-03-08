@@ -36,19 +36,27 @@ export function NavUser({
     isMobile: boolean
 }) {
     return (
-        <div className="px-2 py-2">
+        <div className="px-2 py-2" style={{ transform: 'none' }}>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <button className="flex w-full items-center gap-2 rounded-lg p-2 text-sm hover:bg-accent hover:text-accent-foreground">
-                        <Avatar className="h-8 w-8 rounded-lg">
+                    <button 
+                        className="flex w-full items-center gap-2 rounded-lg p-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                        style={{ 
+                            transform: 'none',
+                            transition: 'background-color 0.2s ease-in-out, color 0.2s ease-in-out',
+                            outline: 'none',
+                            border: 'none'
+                        }}
+                    >
+                        <Avatar className="h-8 w-8 rounded-lg" style={{ transform: 'none' }}>
                             <AvatarImage src={user.avatar} alt={user.name} />
                             <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                         </Avatar>
-                        <div className="grid flex-1 text-left text-sm leading-tight">
+                        <div className="grid flex-1 text-left text-sm leading-tight" style={{ transform: 'none' }}>
                             <span className="truncate font-semibold">{user.name}</span>
                             <span className="truncate text-xs">{user.email}</span>
                         </div>
-                        <ChevronsUpDown className="ml-auto size-4" />
+                        <ChevronsUpDown className="ml-auto size-4" style={{ transform: 'none' }} />
                     </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent

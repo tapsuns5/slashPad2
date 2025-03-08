@@ -79,7 +79,7 @@ const PageContent = () => {
                 </div>
 
                 <div className="flex-1 flex flex-col overflow-auto">
-                    <div className="h-14 sticky top-0 bg-background pt-10 z-30">
+                    <div className="h-10 sticky top-0 bg-background pt-10 z-[9999]">
                         <header className="flex items-center h-[calc(100%-3rem)] bg-background border-b border-border px-6">
                             {!isOpen && (
                                 <div className="mb-8 ml-4 h-full flex items-center">
