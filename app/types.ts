@@ -39,3 +39,20 @@ export type Block = {
   updatedAt?: string;
   noteId?: string;
 };
+
+export interface Task {
+  id: string
+  title: string
+  description?: string
+  date: Date
+  priority: string
+  completed?: boolean
+  repeat?: {
+    type: "none" | "daily" | "weekly" | "monthly"
+    dayOfWeek?: number // 0-6, Sunday to Saturday
+    dayOfMonth?: number // 1-31
+    weekOfMonth?: number // 1-5 (first, second, third, fourth, last)
+    monthlyType?: "dayOfMonth" | "dayOfWeek" // Whether to repeat by day of month or day of week
+  }
+}
+
