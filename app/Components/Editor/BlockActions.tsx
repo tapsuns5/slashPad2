@@ -1,5 +1,6 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
+import { Trash2, CopyPlus, RefreshCw } from 'lucide-react';
 
 interface BlockActionsProps {
   isOpen: boolean;
@@ -126,25 +127,19 @@ const BlockActions: React.FC<BlockActionsProps> = ({ isOpen, onClose, position, 
   };
 
   const actions = [
-    { icon: "💬", label: "Comment", shortcut: "⌘M", onClick: () => console.log('Comment clicked') },
-    { icon: "✏️", label: "Suggest", shortcut: "⌘⇧X", onClick: () => console.log('Suggest clicked') },
-    { icon: "🤖", label: "Ask AI", shortcut: "⌘J", onClick: () => console.log('Ask AI clicked') },
     { 
-      icon: "🗑️", 
+      icon: <Trash2 size={18} strokeWidth={1.5} />, 
       label: "Delete", 
       shortcut: "Del", 
       onClick: handleDelete
     },
     { 
-      icon: "📋", 
+      icon: <CopyPlus size={18} strokeWidth={1.5} />, 
       label: "Duplicate", 
       shortcut: "⌘D", 
       onClick: handleDuplicate
     },
-    { icon: "🔄", label: "Turn into", onClick: () => console.log('Turn into clicked') },
-    { icon: "🔗", label: "Copy link to block", shortcut: "⌘^L", onClick: () => console.log('Copy link clicked') },
-    { icon: "📍", label: "Move to", shortcut: "⌘⇧P", onClick: () => console.log('Move to clicked') },
-    { icon: "🎨", label: "Color", onClick: () => console.log('Color clicked') },
+    { icon: <RefreshCw size={18} strokeWidth={1.5} />, label: "Turn into", onClick: () => console.log('Turn into clicked') },
   ];
 
   return (
@@ -153,7 +148,9 @@ const BlockActions: React.FC<BlockActionsProps> = ({ isOpen, onClose, position, 
       style={{ 
         top: position.y,
         left: Math.max(0, position.x - 260),
+        userSelect: 'none',
       }}
+      data-block-actions-open="true"
       onClick={(e) => {
         console.log('Menu container clicked');
         e.preventDefault();
@@ -165,6 +162,13 @@ const BlockActions: React.FC<BlockActionsProps> = ({ isOpen, onClose, position, 
           key={index}
           type="button"
           className="w-full text-left px-2 py-1.5 rounded hover:bg-accent flex items-center justify-between group"
+          style={{ cursor: 'pointer' }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--accent, #f3f4f6)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '';
+          }}
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();

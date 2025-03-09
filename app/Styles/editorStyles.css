@@ -1056,3 +1056,19 @@ th {
     padding-left: 1rem;
     color: var(--muted-foreground)
 }
+/* ... existing code ... */
+
+/* Add these rules at the end of the file */
+[data-block-actions-open="true"] button {
+    cursor: pointer !important;
+}
+
+[data-block-actions-open="true"] button:hover {
+    background-color: var(--accent) !important;
+    cursor: pointer !important;
+}
+
+/* Force cursor pointer for all elements inside block actions */
+[data-block-actions-open="true"] * {
+    cursor: pointer !important;
+}

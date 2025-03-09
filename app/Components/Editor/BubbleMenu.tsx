@@ -16,6 +16,16 @@ const BubbleMenuComponent: React.FC<BubbleMenuProps> = ({ editor }) => {
     <TipTapBubbleMenu
       editor={editor}
       className={`relative z-10 ${styles.bubbleMenu}`}
+      shouldShow={({ editor, view, state, from, to }) => {
+        // Only show if there's an actual text selection (not just a click)
+        const { doc, selection } = state;
+        const { empty } = selection;
+        
+        // Don't show for empty selections or if BlockActions is open
+        // You'll need to add a way to check if BlockActions is open
+        // This could be via a shared context or a custom event
+        return !empty && from !== to && !document.querySelector('[data-block-actions-open="true"]');
+      }}
     >
       <button 
         onClick={() => editor.chain().focus().toggleBold().run()}

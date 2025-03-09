@@ -4,34 +4,100 @@ import { Heading1, Heading2, Heading3, List, ListOrdered, TextQuote, Code, Image
 import { Editor } from "@tiptap/react";
 
 export const COMMANDS: Command[] = [
-  { id: "text-group", label: "Text", type: "group" },
-  { id: "heading1", label: "H1 Heading 1", icon: <Heading1 strokeWidth={1} />, shortcut: "h1 " },
-  { id: "heading2", label: "H2 Heading 2", icon: <Heading2 strokeWidth={1} />, shortcut: "h2 " },
-  { id: "heading3", label: "H3 Heading 3", icon: <Heading3 strokeWidth={1} />, shortcut: "h3 " },
-  { id: "paragraph", label: "Paragraph", icon: <Pilcrow strokeWidth={1} />, shortcut: "p" },
-
-  { id: "blocks-group", label: "Blocks", type: "group" },
-  { id: "bullet", label: "Bullet List", icon: <List strokeWidth={1} />, shortcut: "* " },
+  { id: "text-group", label: "Basic Blocks", type: "group" },
+  { 
+    id: "heading1", 
+    label: "Heading 1", 
+    description: "Large section heading",
+    icon: <Heading1 strokeWidth={1} />, 
+    shortcut: "h1 " 
+  },
+  { 
+    id: "heading2", 
+    label: "Heading 2", 
+    description: "Medium section heading",
+    icon: <Heading2 strokeWidth={1} />, 
+    shortcut: "h2 " 
+  },
+  { 
+    id: "heading3", 
+    label: "Heading 3", 
+    description: "Small section heading",
+    icon: <Heading3 strokeWidth={1} />, 
+    shortcut: "h3 " 
+  },
+  { 
+    id: "paragraph", 
+    label: "Text", 
+    description: "Just start writing with plain text",
+    icon: <Pilcrow strokeWidth={1} />, 
+    shortcut: "p" 
+  },
+  
+  { 
+    id: "bullet", 
+    label: "Bullet List", 
+    description: "Create a simple bullet list",
+    icon: <List strokeWidth={1} />, 
+    shortcut: "* " 
+  },
   {
     id: "ordered",
     label: "Numbered List",
+    description: "Create a numbered list",
     icon: <ListOrdered strokeWidth={1} />,
     shortcut: "1. ",
   },
   {
     id: "blockquote",
     label: "Blockquote",
+    description: "Insert a quote or citation",
     icon: <TextQuote strokeWidth={1} />,
     shortcut: "> ",
   },
-  { id: "code", label: "Code", icon: <Code strokeWidth={1} />, shortcut: "```" },
-  { id: "tiptapimage", label: "Image", icon: <ImageIcon strokeWidth={1} />, shortcut: "![]" },
-  { id: "task", label: "Task", icon: <ListTodo strokeWidth={1} />, shortcut: "- " },
-  { id: "table", label: "Table", icon: <Table strokeWidth={1} />, shortcut: "||" },
-  { id: "details", label: "Details", icon: <ListCollapse strokeWidth={1} />, shortcut: ">" },
-  { id: "div", label: "Divider", icon: <Minus strokeWidth={1} />, shortcut: "---" }
-  
-  
+  { id: "blocks-group", label: "Inline Blocks", type: "group" },
+  { 
+    id: "code", 
+    label: "Code", 
+    description: "Insert a code block",
+    icon: <Code strokeWidth={1} />, 
+    shortcut: "```" 
+  },
+  { 
+    id: "tiptapimage", 
+    label: "Image", 
+    description: "Upload or embed an image",
+    icon: <ImageIcon strokeWidth={1} />, 
+    shortcut: "![]" 
+  },
+  { 
+    id: "task", 
+    label: "Task", 
+    description: "Create a task list",
+    icon: <ListTodo strokeWidth={1} />, 
+    shortcut: "- " 
+  },
+  { 
+    id: "table", 
+    label: "Table", 
+    description: "Insert a table",
+    icon: <Table strokeWidth={1} />, 
+    shortcut: "||" 
+  },
+  { 
+    id: "details", 
+    label: "Details", 
+    description: "Create a collapsible section",
+    icon: <ListCollapse strokeWidth={1} />, 
+    shortcut: ">" 
+  },
+  { 
+    id: "div", 
+    label: "Divider", 
+    description: "Insert a horizontal divider",
+    icon: <Minus strokeWidth={1} />, 
+    shortcut: "---" 
+  }
 ];
 
 interface CommandMenuProps {
@@ -206,7 +272,7 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-[12rem] bg-white shadow-md border rounded-md"
+      className="fixed z-50 w-[18rem] bg-white shadow-md border rounded-md"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,

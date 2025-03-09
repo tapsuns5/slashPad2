@@ -5,6 +5,7 @@ import type React from "react";
 export type Command = {
   id: string;
   label: string;
+  description?: string; // Add description field
   icon?: React.ReactNode;
   shortcut?: string;
   action?: () => void;
@@ -41,16 +42,28 @@ export const CommandList: React.FC<CommandListProps> = ({
         return (
           <div
             key={command.id}
-            className="flex items-center px-2 py-1 hover:bg-gray-100 cursor-pointer text-sm"
+            className="flex items-start px-2 py-1.5 hover:bg-gray-100 cursor-pointer text-sm"
             onClick={() => {
               console.log("Command clicked:", command);
               onSelect(command);
             }}
           >
-            {command.icon && <span className="mr-1.5 text-base">{command.icon}</span>}
-            <div>
+            {command.icon && (
+              <div className="flex-shrink-0 mr-2 border rounded p-1.5">
+                {command.icon}
+              </div>
+            )}
+            <div className="flex-grow">
               <div className="font-medium leading-tight">{command.label}</div>
+              {command.description && (
+                <div className="text-xs text-gray-500">{command.description}</div>
+              )}
             </div>
+            {command.shortcut && (
+              <div className="text-xs text-gray-400 self-center ml-auto">
+                {command.shortcut}
+              </div>
+            )}
           </div>
         );
       })}

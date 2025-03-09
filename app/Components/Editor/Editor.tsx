@@ -30,6 +30,15 @@ const GlobalStyle = createGlobalStyle`
   .ProseMirror.dragging * {
     cursor: grabbing !important;
   }
+  
+  /* Add styles for BlockActions */
+  [data-block-actions-open="true"] button {
+    cursor: pointer !important;
+  }
+  
+  [data-block-actions-open="true"] button:hover {
+    background-color: var(--accent) !important;
+  }
 `;
 
 const EditorComponent: React.FC<EditorProps> = ({ 
@@ -140,11 +149,16 @@ const EditorComponent: React.FC<EditorProps> = ({
         editorInstance?.commands.setNodeSelection(currentNodeRef.current.pos);
       }
 
+      // Position the menu with a slight offset to ensure it's not covered by other elements
       setActionPosition({
-        x: rect.right + 10,
+        x: rect.right + 15, // Increased offset
         y: rect.top,
       });
       setShowActions(true);
+      
+      // Force a style update on the document to ensure BlockActions styling is applied
+      document.body.classList.add('block-actions-visible');
+      setTimeout(() => document.body.classList.remove('block-actions-visible'), 0);
     }
   };
 
