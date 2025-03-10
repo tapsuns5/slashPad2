@@ -148,7 +148,7 @@ const SidebarNotes = () => {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <div className="sticky top-0 z-10 bg-background p-2 border-b">
+            <div className="sticky top-0 z-10 bg-background p-2 border-b ">
                 <div className="relative">
                     <Search className="absolute left-2 top-2 h-5 w-3 text-muted-foreground " />
                     <Input
@@ -182,8 +182,8 @@ const SidebarNotes = () => {
                     </Select>
                 </div>
             </div>
-            <div className="flex-1 overflow-auto px-2 mt-2">
-                <div className="grid gap-1">
+            <div className="mt-2">
+                <div className="px-2 flex flex-col gap-1">
                     {filteredAndSortedNotes.length > 0 ? (
                         filteredAndSortedNotes.map((note) => (
                             <button

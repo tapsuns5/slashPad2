@@ -39,7 +39,7 @@ const navItems = [
     {
         title: "Tasks",
         icon: SquareCheck,
-        url: "#",
+        url: "/tasks",
     },
 ]
 
@@ -154,6 +154,8 @@ export const Sidebar = ({
                             if (item.title === "Search") onSearchClick();
                             else if (item.title === "Calendar") toggleCalendar();
                             else if (item.title === "Notes") toggleNotes();
+                            else if (item.title === "Tasks") router.push('/tasks');
+                            else if (item.url !== "#") router.push(item.url);
                         }}
                     >
                         <div className="flex items-center space-x-2">
