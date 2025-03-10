@@ -148,9 +148,9 @@ const SidebarNotes = () => {
 
     return (
         <div className="flex flex-col h-full bg-background">
-            <div className="sticky top-0 z-10 bg-background p-2 border-b ">
+            <div className="sticky top-0 z-10 bg-background p-2 border-b">
                 <div className="relative">
-                    <Search className="absolute left-2 top-2 h-5 w-3 text-muted-foreground " />
+                    <Search className="absolute left-2 top-2 h-4 w-3 text-muted-foreground " />
                     <Input
                         placeholder="Search notes..."
                         className="pl-7 h-9 text-s border-[#e2e7ee] rounded-none [&::placeholder]:opacity-40"
@@ -189,7 +189,7 @@ const SidebarNotes = () => {
                             <button
                                 key={note.id}
                                 onClick={() => router.push(`/notes/${note.slug}`)}
-                                className="w-full text-left p-2 rounded-none border bg-card hover:bg-accent transition-colors"
+                                className="w-full text-left p-2 rounded-[3px] border bg-white hover:bg-gray-100 transition-colors"
                             >
                                 <div className="flex justify-between items-start">
                                     <h3 className="font-medium text-sm line-clamp-1">{note.title}</h3>
